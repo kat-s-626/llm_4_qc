@@ -1,0 +1,21 @@
+class DatasetColumns:
+	GROUND_TRUTH = "msb_measurement_probabilities"
+	CIRCUIT_HASH = "circuit_hash"
+	HASH = "hash"
+	PYTHON_CODE = "python_code"
+	CIRCUIT_STRING = "circuit_string"
+	NUM_QUBITS = "num_qubits"
+	N_QUBITS = "n_qubits"
+	CIRCUIT_DEPTH = "circuit_depth"
+	NUM_GATES = "num_gates"
+
+	DATA_SOURCE = "data_source"
+	PROMPT = "prompt"
+	COMPLETION = "completion"
+	EXTRA_INFO = "extra_info"
+
+	SPLIT = "split"
+	INDEX = "index"
+	PROBABILITY_DISTRIBUTION = "probability_distribution"
+	FORMATTED_PROMPT = "formatted_prompt"
+	FORMATTED_COMPLETION = "formatted_completion"
