@@ -1,7 +1,6 @@
 class DatasetColumns:
 	GROUND_TRUTH = "msb_measurement_probabilities"
 	CIRCUIT_HASH = "circuit_hash"
-	HASH = "hash"
 	PYTHON_CODE = "python_code"
 	CIRCUIT_STRING = "circuit_string"
 	NUM_QUBITS = "num_qubits"
@@ -19,3 +18,5 @@ class DatasetColumns:
 	PROBABILITY_DISTRIBUTION = "probability_distribution"
 	FORMATTED_PROMPT = "formatted_prompt"
 	FORMATTED_COMPLETION = "formatted_completion"
+	MSB_MEASUREMENT_PROBABILITIES = "msb_measurement_probabilities"
+	LSB_MEASUREMENT_PROBABILITIES = "lsb_measurement_probabilities"
