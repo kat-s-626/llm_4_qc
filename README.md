@@ -6,10 +6,20 @@ This repository contains code for finetuning large language models (LLMs) to enh
 - `verl/`: Contains LLM finetuning scripts using [Verl](https://github.com/verl-project/verl).
 - `scripts/`: Contains bash scripts for automating the data processing, model training, and evaluation workflows.
 
-### LLM Finetuning
+## LLM Finetuning
 The finetuning process is implemented using Verl.
 
-Corresponding scripts for:
+Project scripts include:
  
- - [Data Preprocessing](verl/examples/data_preprocess/state_pred.py)
- - [Reward function](verl/verl/utils/reward_score/state_pred.py)
+- [Data Preprocessing](verl/examples/data_preprocess/state_pred.py)
+    - This script processes raw quantum circuit jsonl files and prepares them as parquet files for verl sft training.
+- [Reward function](verl/verl/utils/reward_score/state_pred.py)
+    - This script defines the reward function used by GRPO to evaluate predicted quantum states against ground truth. It computes a reward score based on the format score and MAE.
+- [SFT Training](verl/examples/sft/run_sft_experiment.sh)
+    - This bash script launches SFT trainer with Verl; edit experiment config and run this script to start SFT training and save checkpoints/logs.
+- [GRPO Training](verl/examples/grpo_trainer/run_grpo_experiment.sh)
+    - This bash script launches GRPO trainer with Verl; edit experiment config and run this script to start GRPO training and save checkpoints/logs.
+
+Model used for fine-tuning: [Qwen3-8B](https://huggingface.co/Qwen/Qwen3-8B) ([Qwen Team, 2025](https://arxiv.org/abs/2505.09388)) with special tokens:
+-  `<circuit_reasoning>` and `</circuit_reasoning>` to denote the start and end of the reasoning process; 
+- `<quantum_state>` and `</quantum_state>` to denote the start and end of the quantum state representation.
