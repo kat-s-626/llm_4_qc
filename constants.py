@@ -20,3 +20,6 @@ class DatasetColumns:
 	FORMATTED_COMPLETION = "formatted_completion"
 	MSB_MEASUREMENT_PROBABILITIES = "msb_measurement_probabilities"
 	LSB_MEASUREMENT_PROBABILITIES = "lsb_measurement_probabilities"
+
+class Directory:
+	PLOT_DIR = Path('./figures')

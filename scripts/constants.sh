@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # project paths
-export project_path="$HOME/llm_4_qc"
+export project_path="."
 export verl="$project_path/verl"
 export inference="$project_path/inference"
 export data="$project_path/data"
