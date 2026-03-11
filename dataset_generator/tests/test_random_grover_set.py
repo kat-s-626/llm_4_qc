@@ -2,7 +2,7 @@ import pytest
 from qiskit import QuantumCircuit, qasm3
 from qiskit.quantum_info import Statevector
 from qiskit.circuit.library import XGate, HGate, ZGate, CXGate, CZGate, MCXGate, MCMTGate
-from dataset_generation.src.utils.random_grover_set import (
+from dataset_generator.src.utils.random_grover_set import (
     generate_random_grover_circuit,
     _check_amplitude,
     _select_gate,

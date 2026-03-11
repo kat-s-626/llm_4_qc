@@ -3,7 +3,7 @@ import math
 from qiskit import QuantumCircuit, qasm3
 from qiskit.quantum_info import Statevector
 from qiskit.circuit.library import HGate, RXGate, RYGate, RZGate, CXGate
-from dataset_generation.src.utils.random_rotation_set import (
+from dataset_generator.src.utils.random_rotation_set import (
     generate_random_circuit,
     _select_gate,
     _get_measurement_probabilities,

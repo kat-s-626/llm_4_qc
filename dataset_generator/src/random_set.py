@@ -1,21 +1,23 @@
-# Random Fixed set utilities
-#
-# Special conditions:
-# 1. For multi-controlled gates we limit the variety by enforcing that the controls
-#    are the first (n-1) qubits and the target is the last qubit.
-# 2. To ensure the dataset includes examples where multi-controlled gates take effect,
-#    with 30% probability the generator will add H gates on all qubits to create
-#    superposition. This increases the chance that multi-controlled gates act
-#    non-trivially and improves training data for models learning their behavior.
-#
-# Qubit ordering:
-# Language models often assume most-significant-qubit ordering, we convert the qiskit LSB to MSB ordering by reversing the qubit indices when adding gates. For example, a gate targeting qubit 0 in qiskit will target qubit (num_qubits - 1) in the generated circuit, and so on.
+"""
+Random set utilities
+
+Special conditions:
+1. For multi-controlled gates we limit the variety by enforcing that the controls
+    are the first (n-1) qubits and the target is the last qubit.
+2. To ensure the dataset includes examples where multi-controlled gates take effect,
+    with 20% probability the generator will add H gates on all qubits to create
+    superposition. This increases the chance that multi-controlled gates act
+    non-trivially and improves training data for models learning their behavior.
+
+Qubit ordering:
+Language models often assume most-significant-qubit ordering, we convert the qiskit LSB to MSB ordering by reversing the qubit indices when adding gates. For example, a gate targeting qubit 0 in qiskit will target qubit (num_qubits - 1) in the generated circuit, and so on.
+"""
 
 from qiskit import QuantumCircuit, qasm3
 from qiskit.quantum_info import Statevector
-from qiskit.circuit.library import XGate, HGate, ZGate, CXGate, CZGate, MCXGate, MCMTGate
-from .python_code_generator import python_code_from_qiskit_circuit
-from .nl_generator import natural_language_from_qiskit_circuit
+from qiskit.circuit.library import CZGate, HGate, MCMTGate, MCXGate, RXGate, RYGate, RZGate, CXGate, ZGate, ZGate, XGate
+from python_code_generator import python_code_from_qiskit_circuit
+from nl_generator import natural_language_from_qiskit_circuit
 import pandas as pd
 import random
 import argparse
@@ -23,6 +25,7 @@ import os
 import json
 import hashlib
 from tqdm import tqdm
+import math
 from config.constants import (
     GATELIST_TYPE,
     GATELIST_PARAMS,
@@ -41,28 +44,52 @@ from config.constants import (
     DATASET_EXTRA_INFO,
 )
 
-# Grover Set
-GROVER_SET = {
-    "x": XGate, "h": HGate, "z": ZGate, "cx": CXGate, "cz": CZGate, "mcx": MCXGate, "mcmt": MCMTGate
+# Rotation Set
+GATE_SET = {
+    "h": HGate, 
+    "x": XGate,
+    "z": ZGate,
+    "rx": RXGate, 
+    "ry": RYGate, 
+    "rz": RZGate, 
+    "cx": CXGate,
+    "cz": CZGate,
+    "mcx": MCXGate,
+    "mcmt": MCMTGate
 }
+
+PARAMS = [
+    0,
+    math.pi/8,
+    math.pi/6,
+    math.pi/4,
+    math.pi/3,
+    math.pi/2,
+    2*math.pi/3,
+    3*math.pi/4,
+    math.pi,
+    -math.pi/8,
+    -math.pi/6,
+    -math.pi/4,
+    -math.pi/3,
+    -math.pi/2,
+    -2*math.pi/3,
+    -3*math.pi/4,
+    -math.pi,
+]
 
 # [single-qubit gates, two-qubit gates, multi-qubit gates]
 PROBABILITY_DISTRIBUTIONS = [0.75, 0.15, 0.1]
-SKIP_PROBABILITY = 0.3
+SKIP_PROBABILITY = 0.2
 AMPLITUDE_THRESHOLD = 1e-10
 
 def _select_gate(num_qubits):
     if num_qubits < 2:
         return 0  # Only single-qubit gates
-    elif num_qubits == 2:
-        return random.choices(
-            population=[0, 1], weights=[0.85, 0.15], k=1
-        )[0]  
     else:
         return random.choices(
             population=[0, 1, 2], weights=PROBABILITY_DISTRIBUTIONS, k=1
-        )[0]  # Use defined probabilities for all gate types
-    
+        )[0]  # Use defined probabilities for single, two, and multi-qubit gates
 
 def _check_amplitude(circuit, num_qubits):
     current_state = Statevector.from_instruction(circuit)
@@ -83,7 +110,7 @@ def _get_measurement_probabilities(circuit):
 
 def _add_gate(gates_list, gate_name, params, target_qubits, target_gate, num_controls, num_targets):
     gate_list = {GATELIST_TYPE: gate_name,
-                 GATELIST_PARAMS: params,
+                 GATELIST_PARAMS: [params] if params is not None else None,
                  GATELIST_TARGET_QUBITS: target_qubits,
                  GATELIST_TARGET_GATE: target_gate,
                  GATELIST_NUM_CONTROLS: num_controls,
@@ -106,7 +133,7 @@ def _get_python_code(num_qubits, gates_list):
 def _get_natural_language_description(num_qubits, gates_list):
     return natural_language_from_qiskit_circuit(num_qubits, gates_list)
 
-def generate_random_grover_circuit(num_qubits, max_num_gates):
+def generate_random_circuit(num_qubits, max_num_gates):
     gates_list = []
     
     circuit = QuantumCircuit(num_qubits)
@@ -116,19 +143,27 @@ def generate_random_grover_circuit(num_qubits, max_num_gates):
         gate_type = _select_gate(num_qubits)
        
         if gate_type == 0:  # Single-qubit gate
-            gate = random.choice(list(GROVER_SET.keys())[:3])  # X, H, Z
+            gate = random.choice(list(GATE_SET.keys())[:7])  # Only single-qubit gates
+            if gate in ["rx", "ry", "rz"]:
+                params = random.choice(PARAMS)
+            else:
+                params = None
             qubit = random.randint(0, num_qubits - 1)
-            _add_gate(gates_list, gate, None, [qubit], None, 0, 1)
-            circuit.append(GROVER_SET[gate](), [qubit])
+            _add_gate(gates_list, gate, params, [qubit], None, 0, 1)
+            if params is not None:
+                circuit.append(GATE_SET[gate](params), [qubit])
+            else:
+                circuit.append(GATE_SET[gate](), [qubit])
             curr_num_gates += 1
         elif gate_type == 1:  # Two-qubit gate
-            gate = random.choice(list(GROVER_SET)[3:5])  # CX, CZ
+            gate = list(GATE_SET.keys())[7:9]  # Only two-qubit gates (CX, CZ)
+            gate = random.choice(gate)
             control_qubit = random.randint(0, num_qubits - 1)
             target_qubit = random.choice(
                 [q for q in range(num_qubits) if q != control_qubit]
             )
             _add_gate(gates_list, gate, None, [control_qubit, target_qubit], None, 1, 1)
-            circuit.append(GROVER_SET[gate](), [control_qubit, target_qubit])
+            circuit.append(GATE_SET[gate](), [control_qubit, target_qubit])
             curr_num_gates += 1
         else:  # Multi-qubit gate
             has_valid_state = _check_amplitude(circuit, num_qubits)
@@ -155,21 +190,21 @@ def generate_random_grover_circuit(num_qubits, max_num_gates):
                 _add_gate(gates_list, "mcmt", None, [q for q in range(num_qubits)], "z", num_qubits - 1, 1)
                 circuit.append(MCMTGate(ZGate(), num_qubits - 1, 1), [q for q in range(num_qubits)])
             curr_num_gates += 1
-
     circuit_hash = _get_circuit_hash(circuit)
-    measurement_probabilities = _get_measurement_probabilities(circuit)  # Ensure probabilities are calculated and stored in the circuit object
+    measurement_probabilities = _get_measurement_probabilities(circuit)  #
+
     return circuit, gates_list, circuit_hash, measurement_probabilities
 
-def generate_random_grover_set(num_circuits, min_num_qubits, max_num_qubits, min_num_gates, max_num_gates, output_file=None):
+def generate_random_set(num_circuits, min_num_qubits, max_num_qubits, min_num_gates, max_num_gates, output_file=None):
     with open(output_file, "w") as f:
         circuit_hashes = set()
         num_generated = 0
 
-        pbar = tqdm(total=num_circuits, desc="Generating random Grover circuits")
+        pbar = tqdm(total=num_circuits, desc="Generating random circuits")
         while num_generated < num_circuits:
             num_qubits = random.randint(min_num_qubits, max_num_qubits)
             num_gates = random.randint(min_num_gates, max_num_gates)
-            circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_grover_circuit(num_qubits, num_gates)
+            circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, num_gates)
 
             if circuit_hash in circuit_hashes:
                 continue  # Skip duplicate circuits
@@ -195,24 +230,24 @@ def generate_random_grover_set(num_circuits, min_num_qubits, max_num_qubits, min
             pbar.update(1)
             
         
-    print(f"Generated {num_generated} unique random Grover circuits and saved to {output_file}.")
+    print(f"Generated {num_generated} unique random circuits and saved to {output_file}.")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate random Grover circuits and save to JSON.")
+    parser = argparse.ArgumentParser(description="Generate random circuits and save to JSON.")
     parser.add_argument("--num_circuits", type=int, default=10, help="Number of random circuits to generate.")
     parser.add_argument("--min_num_qubits", type=int, default=2, help="Minimum number of qubits in the circuits.")
     parser.add_argument("--max_num_qubits", type=int, default=5, help="Maximum number of qubits in the circuits.")
     parser.add_argument("--min_num_gates", type=int, default=5, help="Minimum number of gates in the circuits.")
     parser.add_argument("--max_num_gates", type=int, default=20, help="Maximum number of gates in the circuits.")
-    parser.add_argument("--output_file", type=str, default="random_grover_set.json", help="Output JSON file to save the generated circuits.")
+    parser.add_argument("--output_file", type=str, default="random_set.json", help="Output JSON file to save the generated circuits.")
     parser.add_argument("--random_seed", type=int, default=42, help="Random seed for reproducibility.")
     args = parser.parse_args()  
 
     random.seed(args.random_seed)
 
     data = []
-    generate_random_grover_set(num_circuits=args.num_circuits,
+    generate_random_set(num_circuits=args.num_circuits,
                               min_num_qubits=args.min_num_qubits,
                               max_num_qubits=args.max_num_qubits,
                               min_num_gates=args.min_num_gates,
