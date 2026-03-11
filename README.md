@@ -2,6 +2,8 @@
 This repository contains code for finetuning large language models (LLMs) to enhance their reasoning capabilities in the context of quantum circuits. The project focuses on improving the performance of LLMs in understanding and analyzing quantum circuits, which is crucial for advancing quantum computing research and applications.
 
 ## Repository Structure
+- `dataset_generation/`: Contains scripts for generating datasets of quantum circuits and their corresponding reasoning traces.
+- `config/`: Contains paths and constants used across the project.
 - `inference/`: Contains code for performing inference with the finetuned models, including evaluation scripts and utilities.
 - `verl/`: Contains LLM finetuning scripts using [Verl](https://github.com/verl-project/verl).
 - `visualization/`: Contains scripts for visualizing the results of the finetuning and evaluation processes, such as plotting metrics and generating reports.

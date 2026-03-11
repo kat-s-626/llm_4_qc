@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import numpy as np
 
-from constants import COMMON_SQRT_VALUES
+from config.constants import COMMON_SQRT_VALUES
 
 
 def parse_quantum_state(text: str) -> Optional[List[complex]]:
