@@ -7,6 +7,7 @@ This repository contains code for finetuning large language models (LLMs) to enh
 - `inference/`: Contains code for performing inference with the finetuned models, including evaluation scripts and utilities.
 - `verl/`: Contains LLM finetuning scripts using [Verl](https://github.com/verl-project/verl).
 - `visualization/`: Contains scripts for visualizing the results of the finetuning and evaluation processes, such as plotting metrics and generating reports.
+- `scripts/`: Contains shell scripts for data preprocessing, model evaluation, and other auxiliary tasks.
 
 ## Getting Started
 To replicate the finetuning process, follow these steps:
@@ -18,9 +19,10 @@ To replicate the finetuning process, follow these steps:
    ```bash
    pip install -r verl/requirements.txt
    ```
-3. Prepare your dataset and run LLM finetuning with Verl:
-     - [Data Preprocessing](verl/examples/data_preprocess/state_pred.py)
-         - Processes raw quantum circuit jsonl files and prepares parquet files for Verl SFT training.
+3. Prepare dataset:
+   - Use [scripts/generate_dataset.sh](scripts/generate_dataset.sh) to generate datasets of quantum circuits and their reasoning traces. This script will create parquets files that can be used for verl training.
+
+4. LLM finetuning:
      - [Reward function](verl/verl/utils/reward_score/state_pred.py)
          - Defines the reward function used by GRPO to evaluate predicted quantum states against ground truth (format + MAE).
      - [SFT Training](verl/examples/sft/run_sft_experiment.sh)
