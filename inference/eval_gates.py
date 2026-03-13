@@ -9,14 +9,9 @@ import argparse
 import os
 import sys
 import tqdm
-from inference.utils.quantum_state_parser import (
-    parse_all_quantum_states,
-    parse_component_value,
-    parse_quantum_state,
-    parse_real_value,
-)
 # Add the project root to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from constants import COMMON_SQRT_VALUES
 
 """
     Things to evaluate for quantum gates:
@@ -35,8 +30,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 """ 
     Dataframe columns:
     df["responses"] : model generated response
-    df["reward_model"]["formatted_completion"] : ground truth quantum state
-    df["reward_model"]["msb_measurement_probabilities"] : ground truth probability distribution (full)
+    df["extra_info"]["formatted_completion"] : ground truth quantum state
+    df["extra_info"]["msb_measurement_probabilities"] : ground truth probability distribution (full)
 """
 
 FIDELITY_THRESHOLD = 0.99
@@ -66,9 +61,13 @@ def extract_probability_distribution_from_json(text: str) -> Optional[Dict[str, 
     if reasoning_end_match:
         solution_str = solution_str[reasoning_end_match.end():]
     
+    # Strip markdown code fences (e.g. ```json ... ```) before matching
+    solution_str = re.sub(r'```(?:json)?\s*', '', solution_str).strip()
+
     try:
         # Try to find JSON pattern - get the last one if multiple exist
-        json_matches = re.findall(r'\{[^}]+\}', solution_str)
+        # re.DOTALL allows { ... } to span multiple lines
+        json_matches = re.findall(r'\{[^{}]+\}', solution_str, re.DOTALL)
         if json_matches:
             # Take the last match
             last_json = json_matches[-1]
@@ -330,6 +329,300 @@ def format_accuracy(response: str, num_qubits: int) -> tuple[float, list[bool]]:
     
     return float(all(criteria_list)), criteria_list
 
+def parse_quantum_state(text: str) -> Optional[List[complex]]:
+    """
+    Extract quantum state array from text wrapped between <quantum_state> tags.
+    Handles formats like: [1/√2, -0.71] or [0, 1] or [-1.00, 0] or arrays of any length
+    Also converts symbolic values using COMMON_SQRT_VALUES mapping.
+    
+    Args:
+        text: Text containing quantum state
+        
+    Returns:
+        List of complex numbers representing the quantum state, or None if parsing fails
+    """
+    # Find content between <quantum_state> tags
+    pattern = r'<quantum_state>\s*:?\s*\[(.*?)\]'
+    match = re.search(pattern, text)
+
+    if not match:
+        return None
+    
+    state_str = match.group(1)
+    
+    # Split by comma
+    components = [s.strip() for s in state_str.split(',')]
+    
+    if len(components) < 1:
+        return None
+    
+    try:
+        parsed_components = []
+        for comp in components:
+            value = parse_component_value(comp)
+            if value is None:
+                return None
+            parsed_components.append(complex(value, 0))
+        
+        return parsed_components
+    
+    except (ValueError, AttributeError) as e:
+        return None
+
+def parse_real_value(value_str: str) -> Optional[float]:
+    """
+    Parse a real number that might be symbolic (e.g., "1/√2", "√3/2", "1/8") or numeric.
+    
+    Args:
+        value_str: String representation of a real number
+        
+    Returns:
+        Float value or None if parsing fails
+    """
+    value_str = value_str.strip()
+    
+    # Handle negative values
+    is_negative = False
+    if value_str.startswith('-'):
+        is_negative = True
+        value_str = value_str[1:].strip()
+    elif value_str.startswith('+'):
+        value_str = value_str[1:].strip()
+    
+    # Check if it matches a symbolic value from COMMON_SQRT_VALUES
+    for numeric_value, symbolic_str in COMMON_SQRT_VALUES.items():
+        if value_str == symbolic_str:
+            return -numeric_value if is_negative else numeric_value
+
+    # Handle generic a/√b forms like "2/√2", "3/√8", "0.5/√2"
+    sqrt_fraction_match = re.fullmatch(
+        r'([0-9]*\.?[0-9]+)\s*/\s*√\s*([0-9]*\.?[0-9]+)',
+        value_str
+    )
+    if sqrt_fraction_match:
+        try:
+            numerator = float(sqrt_fraction_match.group(1))
+            radicand = float(sqrt_fraction_match.group(2))
+            if radicand > 0:
+                result = numerator / np.sqrt(radicand)
+                return -result if is_negative else result
+        except ValueError:
+            pass
+
+    # Examples: "2/(2√2)", "3/(4√5)", "2/(√2)", "2/2√2"
+    sqrt_den_match = re.fullmatch(
+        r'([0-9]*\.?[0-9]+)\s*/\s*\(?\s*([0-9]*\.?[0-9]+)?\s*√\s*([0-9]*\.?[0-9]+)\s*\)?',
+        value_str
+    )
+    if sqrt_den_match:
+        try:
+            numerator = float(sqrt_den_match.group(1))
+            coeff_str = sqrt_den_match.group(2)
+            coeff = float(coeff_str) if coeff_str else 1.0
+            radicand = float(sqrt_den_match.group(3))
+
+            denominator = coeff * np.sqrt(radicand)
+            if denominator != 0:
+                result = numerator / denominator
+                return -result if is_negative else result
+        except ValueError:
+            pass
+
+    # Examples: "√2/2", "3√2/4", "0.5√8/2"
+    sqrt_num_match = re.fullmatch(
+        r'([0-9]*\.?[0-9]+)?\s*√\s*([0-9]*\.?[0-9]+)\s*/\s*([0-9]*\.?[0-9]+)',
+        value_str
+    )
+    if sqrt_num_match:
+        try:
+            coeff_str = sqrt_num_match.group(1)
+            coeff = float(coeff_str) if coeff_str else 1.0
+            radicand = float(sqrt_num_match.group(2))
+            denominator = float(sqrt_num_match.group(3))
+            if radicand > 0 and denominator != 0:
+                result = (coeff * np.sqrt(radicand)) / denominator
+                return -result if is_negative else result
+        except ValueError:
+            pass
+
+    # Handle parenthesized numerator forms
+    # Examples: "(√2)/2", "(3√2)/4"
+    sqrt_num_paren_match = re.fullmatch(
+        r'\(\s*([0-9]*\.?[0-9]+)?\s*√\s*([0-9]*\.?[0-9]+)\s*\)\s*/\s*([0-9]*\.?[0-9]+)',
+        value_str
+    )
+    if sqrt_num_paren_match:
+        try:
+            coeff_str = sqrt_num_paren_match.group(1)
+            coeff = float(coeff_str) if coeff_str else 1.0
+            radicand = float(sqrt_num_paren_match.group(2))
+            denominator = float(sqrt_num_paren_match.group(3))
+            if radicand > 0 and denominator != 0:
+                result = (coeff * np.sqrt(radicand)) / denominator
+                return -result if is_negative else result
+        except ValueError:
+            pass
+
+    # Try to parse as a regular float
+    try:
+        result = float(value_str)
+        return -result if is_negative else result
+    except ValueError:
+        pass
+    
+    # Try to evaluate simple fractions like "1/8"
+    if '/' in value_str and '√' not in value_str:
+        try:
+            parts = value_str.split('/')
+            if len(parts) == 2:
+                numerator = float(parts[0].strip())
+                denominator = float(parts[1].strip())
+                if denominator != 0:
+                    result = numerator / denominator
+                    return -result if is_negative else result
+        except ValueError:
+            pass
+    
+    return None
+
+def parse_component_value(comp: str) -> Optional[complex]:
+    """
+    Parse a single component value, handling symbolic representations and complex numbers.
+    
+    Args:
+        comp: Component string (e.g., "1/√2", "-0.71", "√3/2", "1/2", "0.5+0.3j", "√3/2j", "1/8i", "-0.71 + 1/√2j")
+        
+    Returns:
+        Complex number or None if parsing fails
+    """
+    comp = comp.strip()
+    comp = comp.replace('i', 'j')  # Normalize imaginary unit to 'j'
+    
+    # Check for complex numbers with both real and imaginary parts (contains + or - in middle)
+    # Pattern: find + or - that's not at the start and is followed by something ending in 'j'
+    # This handles cases like "-0.71 + 1/√2j" or "0.5-0.3j"
+    for i in range(1, len(comp)):  # Start from 1 to skip leading sign
+        if comp[i] in ['+', '-']:
+            # Check if this splits into real and imaginary parts
+            real_part = comp[:i].strip()
+            imag_part = comp[i:].strip()
+            
+            # If imaginary part ends with 'j', try to parse as complex
+            if imag_part.endswith('j'):
+                try:
+                    # Parse real part
+                    real_value = parse_real_value(real_part)
+                    if real_value is None:
+                        continue
+                    
+                    # Parse imaginary part (remove 'j' first)
+                    imag_coeff = imag_part[:-1].strip()
+                    
+                    # Handle cases like "+1/√2" or "-1/√2"
+                    if not imag_coeff or imag_coeff == '+':
+                        imag_value = 1.0
+                    elif imag_coeff == '-':
+                        imag_value = -1.0
+                    else:
+                        imag_value = parse_real_value(imag_coeff)
+                        if imag_value is None:
+                            continue
+                    
+                    return complex(real_value, imag_value)
+                except (ValueError, AttributeError):
+                    continue
+    
+    # Check if this is purely imaginary (ends with 'j' and no +/- in the middle found above)
+    if comp.endswith('j'):
+        coeff_str = comp[:-1].strip()
+        
+        # Handle standalone 'j' (coefficient is 1)
+        if not coeff_str or coeff_str == '+':
+            return complex(0, 1)
+        if coeff_str == '-':
+            return complex(0, -1)
+        
+        # Parse the coefficient as a real value
+        coeff_value = parse_real_value(coeff_str)
+        if coeff_value is not None:
+            return complex(0, coeff_value)
+        else:
+            print(f"Failed to parse imaginary coefficient: {coeff_str}")
+            return None
+    
+    # Otherwise, try to parse as a real number
+    real_value = parse_real_value(comp)
+    if real_value is not None:
+        return complex(real_value, 0)
+    
+    print(f"Failed to parse component value: {comp}")
+    return None
+
+
+def parse_all_quantum_states(text: str) -> List[Optional[List[complex]]]:
+    """
+    Extract all quantum state arrays from text (for multiple steps).
+    Handles multiple formats:
+    1. <quantum_state>: [...]
+    2. "The current state becomes [...]" or "The current state becomes: [...]"
+    3. "Current state: [...]"
+    
+    Detects which pattern exists in the text and uses only that pattern for parsing.
+    Only returns successfully parsed states (skips those that fail to parse).
+    
+    Args:
+        text: Text containing multiple quantum states
+        
+    Returns:
+        List of quantum states (only successfully parsed states, no None values)
+    """
+    states = []
+    
+    # Define all patterns
+    # TODO: Update this pattern later on 
+    pattern1 = r'<quantum_state>\s*:?\s*\[(.*?)\]'  
+
+    
+    # Check which pattern exists in the text (in priority order)
+    selected_pattern = None
+    if re.search(pattern1, text):
+        selected_pattern = pattern1
+    
+    # If no pattern found, return empty list
+    if selected_pattern is None:
+        return states
+    
+    # Find all matches for the selected pattern
+    matches = re.findall(selected_pattern, text)
+    
+    # Parse each match, only keep successfully parsed states
+    for match_content in matches:
+        components = [s.strip() for s in match_content.split(',')]        
+        if len(components) < 1:
+            continue  # Skip empty states
+        
+        try:
+            parsed_components = []
+            parse_success = True
+            for comp in components:
+                value = parse_component_value(comp)
+                if value is None:
+                    print(f"Failed to parse component '{comp}'")
+                    parse_success = False
+                    break
+                parsed_components.append(value)
+
+            # Only append if parsing was successful
+            if parse_success:
+                states.append(parsed_components)
+            else:
+                print(f"Skipping state due to parse failure: {match_content}")
+        except (ValueError, AttributeError):
+            print(f"Exception occurred while parsing state: {match_content}")
+            continue  # Skip states that raise exceptions
+    
+    return states
+
 def compute_fidelity(state1: List[complex], state2: List[complex]) -> float:
     """
     Compute fidelity between two quantum states as the absolute square of their inner product.
@@ -473,9 +766,9 @@ def bin_value(value, num_bins=10):
     return f"{bin_start}-{bin_end}"
 
 
-def _parse_reward_model_field(value: Any) -> Any:
+def _parse_extra_info_field(value: Any) -> Any:
     """
-    Parse reward_model fields that may be a JSON string or already a Python object.
+    Parse extra_info fields that may be a JSON string or already a Python object.
     """
     if isinstance(value, str):
         try:
@@ -485,26 +778,39 @@ def _parse_reward_model_field(value: Any) -> Any:
     return value
 
 
-def _extract_reward_model_dict(row: pd.Series) -> Dict[str, Any]:
+def _extract_extra_info_dict(row: pd.Series) -> Dict[str, Any]:
     """
-    Extract reward_model as a dictionary from a dataframe row.
+    Extract extra_info as a dictionary from a dataframe row.
     """
-    reward_model = row.get('reward_model', {})
-    reward_model = _parse_reward_model_field(reward_model)
-    return reward_model if isinstance(reward_model, dict) else {}
+    extra_info = row.get('extra_info', {})
+    extra_info = _parse_extra_info_field(extra_info)
+    return extra_info if isinstance(extra_info, dict) else {}
 
 
-def _extract_ground_truth_prob_dist(reward_model: Dict[str, Any]) -> Tuple[Dict[str, float], Optional[str]]:
+def _extract_ground_truth_prob_dist(extra_info: Dict[str, Any]) -> Tuple[Dict[str, float], Optional[str]]:
     """
-    Extract ground-truth probability distribution from msb_measurement_probabilities field.
+    Extract ground-truth probability distribution with support for updated and legacy key names.
+
+    Priority:
+    1) msb_measurement_probabilities (new)
+    2) probability_distribution (legacy)
+    3) ground_truth (legacy)
     """
-    source_key = 'msb_measurement_probabilities'
-    raw_dist = reward_model.get(source_key)
+    key_priority = ['msb_measurement_probabilities', 'probability_distribution', 'ground_truth']
+    source_key = None
+    raw_dist = None
+
+    for key in key_priority:
+        candidate = extra_info.get(key)
+        if candidate not in (None, '', {}):
+            source_key = key
+            raw_dist = candidate
+            break
 
     if raw_dist in (None, '', {}):
         return {}, source_key
 
-    parsed_dist = _parse_reward_model_field(raw_dist)
+    parsed_dist = _parse_extra_info_field(raw_dist)
     if not isinstance(parsed_dist, dict):
         return {}, source_key
 
@@ -601,7 +907,7 @@ def evaluate_model_performance(df: pd.DataFrame, model_name='Qwen/Qwen3-0.6B', s
     Comprehensive evaluation of model performance for quantum gate predictions.
     
     Args:
-        df: DataFrame with columns 'responses' and 'reward_model'
+        df: DataFrame with columns 'responses' and 'extra_info'
         model_name: Model name for tokenizer
         store_individual: Whether to store individual sample results
         
@@ -711,18 +1017,22 @@ def evaluate_model_performance(df: pd.DataFrame, model_name='Qwen/Qwen3-0.6B', s
         prompt = row.get('prompt', '')
         response = row.get('responses', '')
         
-        # Get ground truth from reward_model
-        reward_model = _extract_reward_model_dict(row)
+        # Get ground truth from extra_info
+        extra_info = _extract_extra_info_dict(row)
     
-        ground_truth = row.get('completion', 'msb_measurement_probabilities')  # Default to 'completion' if 'ground_truth' not present
-        ground_truth_prob, prob_source_key = _extract_ground_truth_prob_dist(reward_model)
+        ground_truth = row.get('completion', 'N/A') 
+        ground_truth_prob, prob_source_key = _extract_ground_truth_prob_dist(extra_info)
         
 
-        extra_info = reward_model
+        extra_info = extra_info
 
         circuit_depth = extra_info.get('circuit_depth', None)
         num_qubits_info = extra_info.get('num_qubits', None)
+        if num_qubits_info is not None:
+            num_qubits_info = int(num_qubits_info)  
         num_gates = extra_info.get('num_gates', None)
+        if num_gates is not None:
+            num_gates = int(num_gates)  
         marked_states = extra_info.get('marked_states', [])
         
         # Handle if marked_states is stored as JSON string
@@ -773,7 +1083,7 @@ def evaluate_model_performance(df: pd.DataFrame, model_name='Qwen/Qwen3-0.6B', s
             'ground_truth_prob_source': prob_source_key,
         }
         
-        if not response or not ground_truth:
+        if not response:
             print(f"Skipping sample {idx} due to missing response or ground truth.")
             if store_individual:
                 results['individual_results'].append(individual_result)

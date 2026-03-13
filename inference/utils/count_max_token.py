@@ -1,6 +1,5 @@
 from transformers import AutoTokenizer
 import tqdm
-import json
 import pandas as pd
 import argparse
 

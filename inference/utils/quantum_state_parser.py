@@ -1,8 +1,6 @@
 import re
 from typing import List, Optional
-
 import numpy as np
-
 from config.constants import COMMON_SQRT_VALUES
 
 
