@@ -7,25 +7,24 @@ llm_4_qc/
 ├── config/              # Shared constants and path configuration
 ├── dataset_generator/   # Dataset generation and preprocessing pipeline
 ├── inference/           # Inference and evaluation scripts
-├── scripts/             # Shell workflows (dataset prep, training utilities)
+├── scripts/             # Shell workflows 
 ├── visualization/       # Plotting and result-analysis scripts
 └── verl/                # Verl framework and training recipes
+    └── experiments/       # Scripts for SFT and GRPO experiments
 ```
 
 ## Getting Started
 To replicate the finetuning process, follow these steps:
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/kat-s-626/llm_4_qc.git
-    ```
-2. Install the required dependencies:
+1. Install the required dependencies:
    ```bash
    pip install -r verl/requirements.txt
    ```
-3. Prepare dataset:
-   - Use [scripts/generate_dataset.sh](scripts/generate_dataset.sh) to generate datasets of quantum circuits and their reasoning traces. This script will create parquets files that can be used for verl training.
+2. Generate datasets of quantum circuits and their reasoning traces. This script will create training and testing parquets files that can be used for verl training:
+    ```bash
+    bash scripts/generate_dataset.sh
+    ```
 
-4. LLM finetuning:
+3. LLM finetuning:
      - [Reward function](verl/verl/utils/reward_score/state_pred.py)
          - Defines the reward function used by GRPO to evaluate predicted quantum states against ground truth (format + MAE).
      - [SFT Training](verl/examples/sft/run_sft_experiment.sh)

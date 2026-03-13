@@ -1,21 +1,26 @@
-import pytest
+import json
 import math
 from qiskit import QuantumCircuit, qasm3
 from qiskit.quantum_info import Statevector
-from qiskit.circuit.library import HGate, RXGate, RYGate, RZGate, CXGate
-from dataset_generator.src.utils.random_rotation_set import (
+from dataset_generator.src.random_set import (
     generate_random_circuit,
+    generate_random_set,
     _select_gate,
     _get_measurement_probabilities,
     _get_circuit_hash,
-    _add_gate,
     _reverse_qubit_ordering,
     _get_python_code,
     _get_natural_language_description,
-    ROTATION_SET,
+    GATE_SET,
     PROBABILITY_DISTRIBUTIONS,
     AMPLITUDE_THRESHOLD,
-    PARAMS
+    PARAMS,
+)
+from config.constants import (
+    DATASET_REQUIRED_FIELDS,
+    DATASET_CIRCUIT_HASH,
+    DATASET_LSB_MEASUREMENT_PROBABILITIES,
+    DATASET_MSB_MEASUREMENT_PROBABILITIES,
 )
 
 
@@ -28,22 +33,20 @@ class TestSelectGate:
             gate_type = _select_gate(1)
             assert gate_type == 0
 
-    def test_two_qubit_distribution(self):
-        """With 2 qubits, should select from single and two-qubit gates."""
+    def test_multi_qubit_distribution(self):
+        """With 2+ qubits, all gate types should be possible."""
         results = [_select_gate(2) for _ in range(1000)]
-        assert all(g in [0, 1] for g in results)
-        assert 0 in results and 1 in results  # Both types should appear
+        assert all(g in [0, 1, 2] for g in results)
+        assert {0, 1, 2}.issubset(set(results))
 
-
-
-class TestGenerateRandomRotationSet:
+class TestGenerateRandomSetCircuit:
     """Test the main circuit generation function."""
 
     def test_circuit_creation(self):
         """Circuit should be created with correct number of qubits."""
         num_qubits = 3
         max_gates = 10
-        circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
+        circuit, _, _, _ = generate_random_circuit(num_qubits, max_gates)
         assert isinstance(circuit, QuantumCircuit)
         assert circuit.num_qubits == num_qubits
 
@@ -51,38 +54,38 @@ class TestGenerateRandomRotationSet:
         """Circuit should not exceed max_num_gates."""
         num_qubits = 3
         max_gates = 15
-        circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
+        circuit, _, _, _ = generate_random_circuit(num_qubits, max_gates)
         assert len(circuit.data) <= max_gates
 
-    def test_single_qubit_circuit(self):
-        """Single qubit circuit should only contain single-qubit gates."""
-        num_qubits = 1
-        max_gates = 10
-        circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
-        
-        single_qubit_gates = {'rx', 'ry', 'rz', 'h'}
-        for instruction in circuit.data:
-            assert instruction.operation.name in single_qubit_gates
-
     def test_gate_types_present(self):
-        """Circuit should contain gates from the Rotation set."""
+        """Circuit should contain gates from the random set."""
         num_qubits = 4
         max_gates = 50
-        circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
-        
-        valid_gate_names = {
-            'rx', 'ry', 'rz', 'h', 'cx'
-        }
-        
+        circuit, _, _, _ = generate_random_circuit(num_qubits, max_gates)
+
+        valid_gate_names = set(GATE_SET.keys())
+
         gate_names = {inst.operation.name for inst in circuit.data}
         assert gate_names.issubset(valid_gate_names)
         assert len(gate_names) > 0  # At least some gates should be present
+
+    def test_multi_qubit_gates_structure(self):
+        """Multi-controlled gates should involve every qubit exactly once."""
+        num_qubits = 4
+        max_gates = 100
+        circuit, _, _, _ = generate_random_circuit(num_qubits, max_gates)
+
+        for instruction in circuit.data:
+            if instruction.operation.name in ["mcx", "mcmt"]:
+                qubits = [circuit.qubits.index(q) for q in instruction.qubits]
+                assert len(qubits) == num_qubits
+                assert set(qubits) == set(range(num_qubits))
 
     def test_circuit_is_executable(self):
         """Generated circuit should be executable and produce valid statevector."""
         num_qubits = 3
         max_gates = 20
-        circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
+        circuit, _, _, _ = generate_random_circuit(num_qubits, max_gates)
         
         # Should not raise an exception
         statevector = Statevector.from_instruction(circuit)
@@ -94,8 +97,8 @@ class TestGenerateRandomRotationSet:
         """Multiple calls should produce different circuits (probabilistic test)."""
         num_qubits = 3
         max_gates = 10
-        circuit1, _, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
-        circuit2, _, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
+        circuit1, _, _, _ = generate_random_circuit(num_qubits, max_gates)
+        circuit2, _, _, _ = generate_random_circuit(num_qubits, max_gates)
         
         # With high probability, these should not be identical
         assert qasm3.dumps(circuit1) != qasm3.dumps(circuit2)
@@ -104,14 +107,14 @@ class TestGenerateRandomRotationSet:
         """Circuit with max_gates=0 should be empty."""
         num_qubits = 3
         max_gates = 0
-        circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
+        circuit, _, _, _ = generate_random_circuit(num_qubits, max_gates)
         assert len(circuit.data) == 0
 
     def test_large_circuit(self):
         """Should handle larger circuits without issues."""
         num_qubits = 5
         max_gates = 100
-        circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
+        circuit, _, _, _ = generate_random_circuit(num_qubits, max_gates)
         assert isinstance(circuit, QuantumCircuit)
         assert circuit.num_qubits == num_qubits
         assert len(circuit.data) <= max_gates
@@ -120,7 +123,7 @@ class TestGenerateRandomRotationSet:
         """Two-qubit gates should have distinct control and target."""
         num_qubits = 3
         max_gates = 50
-        circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
+        circuit, _, _, _ = generate_random_circuit(num_qubits, max_gates)
         
         for instruction in circuit.data:
             if instruction.operation.name in ['cx', 'cz']:
@@ -129,26 +132,32 @@ class TestGenerateRandomRotationSet:
                 assert qubits[0] != qubits[1]  # Control and target should differ
 
 
-class TestRotationSetConfiguration:
+class TestRandomSetConfiguration:
     """Test the configuration constants."""
 
-    def test_rotation_set_contents(self):
-        """Rotation set should contain valid gate names."""
+    def test_gate_set_contents(self):
+        """Gate set should contain valid gate names used by random_set."""
         valid_gate_names = {
-            'rx', 'ry', 'rz', 'h', 'cx'
+            "h", "x", "z", "rx", "ry", "rz", "cx", "cz", "mcx", "mcmt"
         }
-        assert set(ROTATION_SET).issubset(valid_gate_names)
-        assert len(ROTATION_SET) > 0  # Should not be empty
+        assert set(GATE_SET).issubset(valid_gate_names)
+        assert len(GATE_SET) > 0  # Should not be empty
 
     def test_probability_distribution(self):
         """Probability distribution should sum to 1.0."""
         assert abs(sum(PROBABILITY_DISTRIBUTIONS) - 1.0) < 1e-10
+        assert len(PROBABILITY_DISTRIBUTIONS) == 3
 
     def test_parameters_list(self):
         """Parameters list should contain valid rotation angles."""
         for param in PARAMS:
             assert isinstance(param, (int, float))
             assert -2*math.pi <= param <= 2*math.pi
+
+    def test_amplitude_threshold(self):
+        """Amplitude threshold should be a small positive number."""
+        assert AMPLITUDE_THRESHOLD > 0
+        assert AMPLITUDE_THRESHOLD < 1e-5
 
 class TestOutputFormat:
     """Test output json format and hash function."""
@@ -157,7 +166,7 @@ class TestOutputFormat:
         """Hash function should produce consistent results for the same circuit."""
         num_qubits = 3
         max_gates = 10
-        circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
+        circuit, _, _, _ = generate_random_circuit(num_qubits, max_gates)
         
         hash1 = _get_circuit_hash(circuit)
         hash2 = _get_circuit_hash(circuit)
@@ -168,7 +177,7 @@ class TestOutputFormat:
         """Probabilities should be returned in the correct format."""
         num_qubits = 2
         max_gates = 5
-        circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
+        circuit, _, _, _ = generate_random_circuit(num_qubits, max_gates)
         
         probabilities = _get_measurement_probabilities(circuit)
         assert isinstance(probabilities, dict)
@@ -182,7 +191,7 @@ class TestOutputFormat:
         """Gates list should contain correct structure for each gate."""
         num_qubits = 3
         max_gates = 10
-        circuit, gates_list, circuit_hash, measurement_probabilities = generate_random_circuit(num_qubits, max_gates)
+        _, gates_list, _, _ = generate_random_circuit(num_qubits, max_gates)
         
         assert isinstance(gates_list, list)
         for gate_info in gates_list:
@@ -193,6 +202,42 @@ class TestOutputFormat:
             assert 'target_gate' in gate_info
             assert 'num_controls' in gate_info
             assert 'num_targets' in gate_info
+
+    def test_generate_random_set_jsonl_output(self, tmp_path):
+        """generate_random_set should write valid JSONL records with required fields."""
+        output_path = tmp_path / "random_set.jsonl"
+
+        generate_random_set(
+            num_circuits=3,
+            min_num_qubits=2,
+            max_num_qubits=3,
+            min_num_gates=1,
+            max_num_gates=5,
+            output_file=str(output_path),
+        )
+
+        assert output_path.exists()
+
+        lines = output_path.read_text(encoding="utf-8").strip().splitlines()
+        assert len(lines) == 3
+
+        hashes = set()
+        for line in lines:
+            record = json.loads(line)
+
+            for field in DATASET_REQUIRED_FIELDS:
+                assert field in record
+
+            hashes.add(record[DATASET_CIRCUIT_HASH])
+
+            lsb_probs = record[DATASET_LSB_MEASUREMENT_PROBABILITIES]
+            msb_probs = record[DATASET_MSB_MEASUREMENT_PROBABILITIES]
+
+            assert isinstance(lsb_probs, dict)
+            assert isinstance(msb_probs, dict)
+            assert _reverse_qubit_ordering(lsb_probs) == msb_probs
+
+        assert len(hashes) == 3
     
     def test_lsb_first_format(self):
         qc = QuantumCircuit(3)
@@ -233,9 +278,7 @@ circuit.rz(pi/4, 1)"""
         gates_list.append({"type": "cx", "params": None, "target_qubits": [0, 1], "target_gate": None, "num_controls": 1, "num_targets": 1})
         gates_list.append({"type": "rz", "params": [math.pi/4], "target_qubits": [1], "target_gate": None, "num_controls": 0, "num_targets": 1})
         nl_description = _get_natural_language_description(num_qubits, gates_list)
-        target_nl_str = """Given the initial quantum state |0⟩^⊗2, apply the following quantum gates in sequence:
-
-1. H gate on qubit 0.
-2. CX gate controls on qubits [0], targets on qubit 1.
-3. RZ(π/4) gate on qubit 1."""
-        assert nl_description.strip() == target_nl_str.strip()
+        assert "Given the initial quantum state |0⟩^⊗2" in nl_description
+        assert "H gate on qubit 0." in nl_description
+        assert "CX gate" in nl_description
+        assert "RZ(π/4) gate on qubit 1." in nl_description

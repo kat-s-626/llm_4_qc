@@ -2,7 +2,6 @@
 source constants.sh
 
 # Generate jsonl datasets of random circuits
-
 cd "$project_root" || {
     echo "Error: Failed to change directory to $project_root."
     exit 1
@@ -27,13 +26,6 @@ TEST_OUTPUT_FILE_3="$RANDOM_SET_PATH/test_3.jsonl"
 
 # make sure output directory exists
 mkdir -p "$RANDOM_SET_PATH"
-
-
-# Clear output files
-> $TRAINING_OUTPUT_FILE
-> $TEST_OUTPUT_FILE_1
-> $TEST_OUTPUT_FILE_2
-> $TEST_OUTPUT_FILE_3
 
 # Function to generate and split circuits
 generate_circuits() {
@@ -89,6 +81,11 @@ generate_circuits_test_only() {
     echo "Done"
 }
 
+# # Clear output files
+> $TRAINING_OUTPUT_FILE
+> $TEST_OUTPUT_FILE_1
+> $TEST_OUTPUT_FILE_2
+> $TEST_OUTPUT_FILE_3
 
 echo "===== In-Distribution Test Set (test_1) ====="
 generate_circuits $TOTAL_SIZE 1 5 1 10 $TEST_OUTPUT_FILE_1 "test_1.jsonl"
@@ -155,7 +152,7 @@ generate_sft_parquet() {
     local output_file=$2
     local local_dir=$3
 
-    python "$verl/examples/data_preprocess/state_pred_reasoning.py" \
+    python -m verl.experiments.preprocess_sft_set \
         --input_file "$input_file" \
         --local_dir "$local_dir" \
         --data_source "$data_source" \
@@ -163,8 +160,6 @@ generate_sft_parquet() {
 
     mv "$local_dir"/train.parquet "$local_dir"/$output_file
 }
-
-
 
 local_dir="$RANDOM_SET_PATH/sft_datasets"
 
@@ -174,4 +169,4 @@ generate_sft_parquet "$RANDOM_SET_PATH/test_2_updated.jsonl" "test_2.parquet" "$
 generate_sft_parquet "$RANDOM_SET_PATH/test_3_updated.jsonl" "test_3.parquet" "$local_dir"
 
 # Rename the training set back to train.parquet at the end
-mv "$local_dir"/train_updated.parquet "$local_dir"/train.parquet
+mv "$local_dir/train_updated.parquet" "$local_dir/train.parquet"

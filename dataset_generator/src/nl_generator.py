@@ -1,7 +1,7 @@
 import numpy as np
 from math import pi
 from qiskit.circuit.library import *
-from qiskit import QuantumCircuit, qasm3
+from qiskit import qasm3
 
 from config.constants import SYMBOLIC_PARAMS_TO_STR
 

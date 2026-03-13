@@ -16,12 +16,11 @@ Language models often assume most-significant-qubit ordering, we convert the qis
 from qiskit import QuantumCircuit, qasm3
 from qiskit.quantum_info import Statevector
 from qiskit.circuit.library import CZGate, HGate, MCMTGate, MCXGate, RXGate, RYGate, RZGate, CXGate, ZGate, ZGate, XGate
-from python_code_generator import python_code_from_qiskit_circuit
-from nl_generator import natural_language_from_qiskit_circuit
+from dataset_generator.src.python_code_generator import python_code_from_qiskit_circuit
+from dataset_generator.src.nl_generator import natural_language_from_qiskit_circuit
 import pandas as pd
 import random
 import argparse
-import os
 import json
 import hashlib
 from tqdm import tqdm
@@ -143,7 +142,7 @@ def generate_random_circuit(num_qubits, max_num_gates):
         gate_type = _select_gate(num_qubits)
        
         if gate_type == 0:  # Single-qubit gate
-            gate = random.choice(list(GATE_SET.keys())[:7])  # Only single-qubit gates
+            gate = random.choice(list(GATE_SET.keys())[:6])  # Only single-qubit gates
             if gate in ["rx", "ry", "rz"]:
                 params = random.choice(PARAMS)
             else:
@@ -156,7 +155,7 @@ def generate_random_circuit(num_qubits, max_num_gates):
                 circuit.append(GATE_SET[gate](), [qubit])
             curr_num_gates += 1
         elif gate_type == 1:  # Two-qubit gate
-            gate = list(GATE_SET.keys())[7:9]  # Only two-qubit gates (CX, CZ)
+            gate = list(GATE_SET.keys())[6:8]  # Only two-qubit gates (CX, CZ)
             gate = random.choice(gate)
             control_qubit = random.randint(0, num_qubits - 1)
             target_qubit = random.choice(

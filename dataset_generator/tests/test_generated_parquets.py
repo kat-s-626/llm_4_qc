@@ -3,9 +3,8 @@ import pandas as pd
 import re
 import json
 import os
+from config.paths import RANDOM_SFT_DIR
 from config.constants import (
-    GROVER_SFT_DIR,
-    ROTATION_SFT_DIR,
     DATASET_NUM_QUBITS,
     DATASET_CIRCUIT_DEPTH,
     DATASET_CIRCUIT_HASH,
@@ -19,14 +18,10 @@ home = os.environ.get("HOME")
 
 
 @pytest.fixture(params=[
-    f"{GROVER_SFT_DIR}/train.parquet",
-    f"{GROVER_SFT_DIR}/test_1.parquet",
-    f"{GROVER_SFT_DIR}/test_2.parquet",
-    f"{GROVER_SFT_DIR}/test_3.parquet",
-    f"{ROTATION_SFT_DIR}/train.parquet",
-    f"{ROTATION_SFT_DIR}/test_1.parquet",
-    f"{ROTATION_SFT_DIR}/test_2.parquet",
-    f"{ROTATION_SFT_DIR}/test_3.parquet",
+    f"{RANDOM_SFT_DIR}/train.parquet",
+    f"{RANDOM_SFT_DIR}/test_1.parquet",
+    f"{RANDOM_SFT_DIR}/test_2.parquet",
+    f"{RANDOM_SFT_DIR}/test_3.parquet",
 ])
 def parquet_path(request):
     """Parametrized fixture to test all parquet datasets."""
@@ -39,14 +34,10 @@ def test_num_entries(parquet_path):
     import pandas as pd
     
     expected_counts = {
-        f"{GROVER_SFT_DIR}/train.parquet": 100000,
-        f"{GROVER_SFT_DIR}/test_1.parquet": 10000,
-        f"{GROVER_SFT_DIR}/test_2.parquet": 4000,
-        f"{GROVER_SFT_DIR}/test_3.parquet": 4000,
-        f"{ROTATION_SFT_DIR}/train.parquet": 100000,
-        f"{ROTATION_SFT_DIR}/test_1.parquet": 10000,
-        f"{ROTATION_SFT_DIR}/test_2.parquet": 4000,
-        f"{ROTATION_SFT_DIR}/test_3.parquet": 4000,
+        f"{RANDOM_SFT_DIR}/train.parquet": 100000,
+        f"{RANDOM_SFT_DIR}/test_1.parquet": 10000,
+        f"{RANDOM_SFT_DIR}/test_2.parquet": 4000,
+        f"{RANDOM_SFT_DIR}/test_3.parquet": 4000,
     }
     
     df = pd.read_parquet(parquet_path)
@@ -55,6 +46,11 @@ def test_num_entries(parquet_path):
     expected_count = expected_counts.get(parquet_path, None)
     assert expected_count is not None, f"No expected count defined for {parquet_path}"
     
+    assert actual_count == expected_count, (
+        f"Parquet file {parquet_path} has {actual_count} entries, "
+        f"but expected {expected_count}."
+    )
+
     assert actual_count == expected_count, (
         f"Parquet file {parquet_path} has {actual_count} entries, "
         f"but expected {expected_count}."

@@ -17,13 +17,13 @@ import multiprocessing
 from multiprocessing import Manager
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import queue
-from python_code_generator import (
+from dataset_generator.src.python_code_generator import (
     python_code_from_qiskit_circuit,
     hash_circuit,
 )
-from nl_generator import natural_language_from_qiskit_circuit
+from dataset_generator.src.nl_generator import natural_language_from_qiskit_circuit
 from config.constants import COMMON_SQRT_VALUES
-from state_vector import StateVectorProcessor
+from dataset_generator.src.state_vector import StateVectorProcessor
 
 
 
