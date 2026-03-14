@@ -25,7 +25,7 @@ To replicate the finetuning process, follow these steps:
     ```
 
 3. LLM finetuning:
-     - [Reward function](verl/verl/utils/reward_score/state_pred.py)
+     - [Reward function](verl/verl/utils/reward_score/state_pred_reasoning_mae.py)
          - Defines the reward function used by GRPO to evaluate predicted quantum states against ground truth (format + MAE).
      - [SFT Training](verl/examples/sft/run_sft_experiment.sh)
          - Launches SFT trainer with Verl; edit experiment config and run to start SFT training and save checkpoints/logs.
