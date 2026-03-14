@@ -18,11 +18,19 @@ To replicate the finetuning process, follow these steps:
 1. Install the required dependencies:
    ```bash
    pip install -r verl/requirements.txt
-   ```
-2. Generate datasets of quantum circuits and their reasoning traces. This script will create training and testing parquets files that can be used for verl training:
-    ```bash
-    bash scripts/generate_dataset.sh
-    ```
+2. Generate datasets for LLM fine-tuning:
+    - To create SFT datasets, run:
+      ```bash
+      bash scripts/generate_sft_datasets.sh
+      ```
+    - To generate combined SFT and GRPO datasets, first install the OpenMath and OpenCode reasoning datasets from Hugging Face and store in the `data/` directory:
+      - [OpenMathReasoning](https://huggingface.co/datasets/nvidia/OpenMathReasoning)
+      - [OpenCodeReasoning](https://huggingface.co/datasets/nvidia/OpenCodeReasoning)
+      
+      Then run:
+      ```bash
+      bash scripts/generate_combined_datasets.sh
+      ```
 
 3. LLM finetuning:
      - [Reward function](verl/verl/utils/reward_score/state_pred_reasoning_mae.py)

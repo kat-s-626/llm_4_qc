@@ -12,6 +12,7 @@ export venv="$project_root/venv/bin/activate"
 
 # data paths
 export grover_set_dir="$data/grover_sets"
+export random_set_dir="$data/random_sets"
 export results_dir="$data/results"
 export train_10_20="$grover_set_dir/sft_datasets/train_filtered_by_gate_count_10_20.parquet"
 export grover_set_grpo="$grover_set_dir/grpo_datasets"
