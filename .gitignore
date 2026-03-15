@@ -212,3 +212,6 @@ __marimo__/
 .baselines/
 archive/
 data/
+logs/
+parsed_logs/
+figures/

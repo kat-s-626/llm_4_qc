@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
-from plot_style_constants import apply_plot_style, PLOT_COLORS
+from visualization.constants import apply_plot_style, PLOT_COLORS
 
 apply_plot_style()
 

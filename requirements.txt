@@ -2,3 +2,4 @@ qiskit==2.3.0
 datasets==4.7.0
 pytest
 vllm
+matplotlib==3.10.8

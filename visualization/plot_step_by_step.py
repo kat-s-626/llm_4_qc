@@ -1,95 +1,111 @@
-import re
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import numpy as np
-import dotenv
-import os
-import argparse
+import pandas as pd
 
-os.environ["PLOT_DIR"] = os.getenv("PLOT_DIR", "./plots")
+from config.paths import FIG_DIR
+from visualization.constants import apply_plot_style, REFERENCE_LINE_STYLE, STEP_FIDELITY_STYLES
 
-def parse_log(log_text):
-    """
-    Parse the evaluation summary log and extract per-step fidelity by qubit count.
-    Returns a dict: { "overall": {step: fidelity}, "1_qubits": {step: fidelity}, ... }
-    """
-    results = {}
+apply_plot_style()
 
-    # ── Overall per-step fidelity ────────────────────────────────────────────
-    overall_section = re.search(
-        r"PER-STEP FIDELITY:\n(.*?)\n\s*PER-STEP FIDELITY BY NUMBER OF QUBITS",
-        log_text, re.DOTALL
+
+DRAW_ORDER = ("1_qubits", "2_qubits", "3_qubits", "4_qubits", "5_qubits", "overall")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Plot step-wise quantum state fidelity from parsed SFT CSV.")
+    parser.add_argument(
+        "--csv-path",
+        type=Path,
+        required=True,
+        help="Path to parsed step-wise fidelity CSV from visualization.utils.sft_log_parser.",
     )
-    if overall_section:
-        results["overall"] = _parse_step_block(overall_section.group(1))
-
-    # ── Per-qubit per-step fidelity ──────────────────────────────────────────
-    qubit_section = re.search(
-        r"PER-STEP FIDELITY BY NUMBER OF QUBITS:(.*?)QUANTUM STATE PARSE STATISTICS",
-        log_text, re.DOTALL
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path(FIG_DIR),
+        help="Directory for saved plot. Defaults to config.paths.FIG_DIR.",
     )
-    if qubit_section:
-        # Find each "N_qubits:" block
-        qubit_blocks = re.findall(
-            r"(\d+_qubits):\n(.*?)(?=\n\s+\d+_qubits:|\Z)",
-            qubit_section.group(1), re.DOTALL
-        )
-        for qubit_label, block in qubit_blocks:
-            results[qubit_label] = _parse_step_block(block)
+    parser.add_argument(
+        "--output-file",
+        type=str,
+        default="stepwise_fidelity_plot.png",
+        help="Filename for step-wise fidelity plot.",
+    )
+    return parser.parse_args()
+
+def load_stepwise_fidelity(csv_path: Path) -> dict[str, dict[int, dict[str, float | int | None]]]:
+    df = pd.read_csv(csv_path)
+    required_columns = {"step", "group", "fidelity"}
+    missing_columns = required_columns.difference(df.columns)
+    if missing_columns:
+        raise ValueError(f"Missing required columns in CSV: {sorted(missing_columns)}")
+
+    df["step"] = pd.to_numeric(df["step"], errors="coerce")
+    df["fidelity"] = pd.to_numeric(df["fidelity"], errors="coerce")
+    if "n" in df.columns:
+        df["n"] = pd.to_numeric(df["n"], errors="coerce")
+    else:
+        df["n"] = pd.NA
+
+    df = df.dropna(subset=["step", "group", "fidelity"]).copy()
+    df["step"] = df["step"].astype(int)
+
+    results: dict[str, dict[int, dict[str, float | int | None]]] = {}
+    for group_name, group_df in df.groupby("group", sort=False):
+        group_df = group_df.sort_values("step").drop_duplicates(subset=["step"], keep="last")
+        step_map: dict[int, dict[str, float | int | None]] = {}
+        for _, row in group_df.iterrows():
+            n_value = row["n"]
+            step_map[int(row["step"])] = {
+                "fidelity": float(row["fidelity"]),
+                "n": int(n_value) if pd.notna(n_value) else None,
+            }
+        results[str(group_name)] = step_map
 
     return results
 
 
-def _parse_step_block(block_text):
-    """Parse lines like '    step_1: 1.000000 (n=10000)' into {step_num: fidelity}."""
-    pattern = re.compile(r"step_(\d+):\s+([\d.]+)\s+\(n=(\d+)\)")
-    step_data = {}
-    for match in pattern.finditer(block_text):
-        step_num = int(match.group(1))
-        fidelity = float(match.group(2))
-        n        = int(match.group(3))
-        step_data[step_num] = {"fidelity": fidelity, "n": n}
-    return step_data
-
-
-def plot_stepwise_fidelity(results, title="Step-wise Quantum State Fidelity", save_path=None):
-
-    style_map = {
-        "1_qubits": {"label": "1 qubit",            "color": "#2ecc71", "lw": 1.8},
-        "2_qubits": {"label": "2 qubits",            "color": "#3498db", "lw": 1.8},
-        "3_qubits": {"label": "3 qubits",            "color": "#f39c12", "lw": 1.8},
-        "4_qubits": {"label": "4 qubits",            "color": "#e74c3c", "lw": 1.8},
-        "5_qubits": {"label": "5 qubits",            "color": "#9b59b6", "lw": 1.8},
-        "overall":  {"label": "Overall (Aggregated)","color": "#1a1a2e", "lw": 2.8},
-    }
-
-    # Preferred draw order (overall on top)
-    draw_order = ["1_qubits", "2_qubits", "3_qubits", "4_qubits", "5_qubits", "overall"]
-
-     # styled combined plot
-    plt.rcParams.update({
-        "font.family": "serif",
-        "font.serif": ["DejaVu Serif", "Computer Modern Roman"],
-        "mathtext.fontset": "cm",   # Computer Modern for math
-    })
+def plot_stepwise_fidelity(results: dict[str, dict[int, dict[str, float | int | None]]], save_path: Path) -> bool:
+    draw_order = [*DRAW_ORDER, *sorted(key for key in results if key not in DRAW_ORDER)]
 
     fig, ax = plt.subplots(figsize=(7, 6))
+    has_any_data = False
 
     for key in draw_order:
         if key not in results:
             continue
         step_data = results[key]
+        if not step_data:
+            continue
         steps     = sorted(step_data.keys())
         fidelities = [step_data[s]["fidelity"] for s in steps]
-        sty = style_map[key]
-        ax.plot(steps, fidelities, label=sty["label"],
-                color=sty["color"], linewidth=sty["lw"])
+        sty = STEP_FIDELITY_STYLES.get(key)
+        if sty:
+            ax.plot(
+                steps,
+                fidelities,
+                label=sty["label"],
+                color=sty["color"],
+                linewidth=sty["linewidth"],
+            )
+        else:
+            ax.plot(steps, fidelities, label=key, linewidth=1.8)
+        has_any_data = True
+
+    if not has_any_data:
+        plt.close(fig)
+        return False
 
     for threshold, label in [(0.99, "99%"), (0.95, "95%"), (0.90, "90%")]:
-        ax.axhline(threshold, color="gray", linestyle="--", linewidth=0.9, alpha=0.7)
+        ax.axhline(threshold, **REFERENCE_LINE_STYLE)
         ax.text(ax.get_xlim()[1] if ax.get_xlim()[1] > 1 else 51,
                 threshold, f" {label}", va="center",
-                fontsize=9, color="gray")
+            fontsize=9, color=REFERENCE_LINE_STYLE["color"])
 
     ax.set_xlabel("Number of Gates", fontsize=13)
     ax.set_ylabel("Quantum State Fidelity", fontsize=13)
@@ -101,28 +117,26 @@ def plot_stepwise_fidelity(results, title="Step-wise Quantum State Fidelity", sa
     ax.legend(loc="lower left", fontsize=10, framealpha=0.9)
 
     plt.tight_layout()
-
-    if save_path:
-        plt.savefig(save_path, dpi=150, bbox_inches="tight")
-        print(f"Saved to {save_path}")
-    else:
-        plt.show()
+    fig.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    return True
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Plot step-wise quantum state fidelity from evaluation logs.")
-    parser.add_argument("--log_path", type=str, required=True, help="Path to the evaluation summary log file.")
-    parser.add_argument("--output_file", type=str, help="Path to save the generated plot.")
-    args = parser.parse_args()
+    args = parse_args()
+    csv_path = args.csv_path.resolve()
+    output_dir = args.output_dir.resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
 
+    if not csv_path.exists() or not csv_path.is_file():
+        raise FileNotFoundError(f"CSV not found: {csv_path}")
 
-    with open(args.log_path, "r") as f:
-        log_text = f.read()
+    save_path = output_dir / args.output_file
+    results = load_stepwise_fidelity(csv_path)
+    saved = plot_stepwise_fidelity(results, save_path)
 
-    save_path = os.path.join(os.getenv("PLOT_DIR"), args.output_file or "stepwise_fidelity_plot.png")
-
-    results = parse_log(log_text)
-    plot_stepwise_fidelity(
-        results,
-        save_path=save_path
-    )
+    print(f"CSV source: {csv_path}")
+    if saved:
+        print(f"Step-wise fidelity plot saved to: {save_path}")
+    else:
+        print("Step-wise fidelity plot skipped: no plottable fidelity data.")
