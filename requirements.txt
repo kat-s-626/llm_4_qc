@@ -3,3 +3,5 @@ datasets==4.7.0
 pytest
 vllm
 matplotlib==3.10.8
+qiskit_aer
+qiskit_ibm_runtime

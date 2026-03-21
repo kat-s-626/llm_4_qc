@@ -11,7 +11,6 @@ This is using MSB ordering convention for qubit indexing, consistent with the re
 
 import numpy as np
 import time
-import json
 from functools import reduce
 from typing import List, Dict, Any, Tuple, Optional
 from multiprocessing import Pool, cpu_count

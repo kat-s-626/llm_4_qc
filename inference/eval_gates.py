@@ -9,8 +9,7 @@ import argparse
 import os
 import sys
 import tqdm
-# Add the project root to Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from constants import COMMON_SQRT_VALUES
 
 """
