@@ -58,23 +58,14 @@ GATE_SET = {
 }
 
 PARAMS = [
-    0,
-    math.pi/8,
     math.pi/6,
     math.pi/4,
     math.pi/3,
     math.pi/2,
-    2*math.pi/3,
-    3*math.pi/4,
-    math.pi,
-    -math.pi/8,
     -math.pi/6,
     -math.pi/4,
     -math.pi/3,
     -math.pi/2,
-    -2*math.pi/3,
-    -3*math.pi/4,
-    -math.pi,
 ]
 
 # [single-qubit gates, two-qubit gates, multi-qubit gates]
@@ -231,24 +222,27 @@ def generate_random_set(num_circuits, min_num_qubits, max_num_qubits, min_num_ga
         
     print(f"Generated {num_generated} unique random circuits and saved to {output_file}.")
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate random circuits and save to JSON.")
+def main():
+    parser = argparse.ArgumentParser(description="Generate random quantum circuits and save to JSONL.")
     parser.add_argument("--num_circuits", type=int, default=10, help="Number of random circuits to generate.")
     parser.add_argument("--min_num_qubits", type=int, default=2, help="Minimum number of qubits in the circuits.")
     parser.add_argument("--max_num_qubits", type=int, default=5, help="Maximum number of qubits in the circuits.")
     parser.add_argument("--min_num_gates", type=int, default=5, help="Minimum number of gates in the circuits.")
     parser.add_argument("--max_num_gates", type=int, default=20, help="Maximum number of gates in the circuits.")
-    parser.add_argument("--output_file", type=str, default="random_set.json", help="Output JSON file to save the generated circuits.")
+    parser.add_argument("--output_file", type=str, default="random_set.jsonl", help="Output JSONL file to save the generated circuits.")
     parser.add_argument("--random_seed", type=int, default=42, help="Random seed for reproducibility.")
-    args = parser.parse_args()  
+    args = parser.parse_args()
 
     random.seed(args.random_seed)
 
-    data = []
-    generate_random_set(num_circuits=args.num_circuits,
-                              min_num_qubits=args.min_num_qubits,
-                              max_num_qubits=args.max_num_qubits,
-                              min_num_gates=args.min_num_gates,
-                              max_num_gates=args.max_num_gates,
-                              output_file=args.output_file) 
+    generate_random_set(
+        num_circuits=args.num_circuits,
+        min_num_qubits=args.min_num_qubits,
+        max_num_qubits=args.max_num_qubits,
+        min_num_gates=args.min_num_gates,
+        max_num_gates=args.max_num_gates,
+        output_file=args.output_file
+    )
+
+if __name__ == "__main__":
+    main()

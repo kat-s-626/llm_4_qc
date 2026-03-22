@@ -308,8 +308,7 @@ def generate_datasets(data_path, new_data_path=None, max_workers=None):
             results.append(result)
     return results
 
-
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         description="Generate simplified reasoning datasets for quantum circuits."
     )
@@ -328,3 +327,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     generate_datasets(args.data_path, args.new_data_path, max_workers=args.max_workers)
+
+
+if __name__ == "__main__":
+    main()

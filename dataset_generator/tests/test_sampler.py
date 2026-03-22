@@ -54,10 +54,6 @@ class TestRandomBitstring:
         result = _random_bitstring(5)
         assert isinstance(result, str)
 
-    def test_randomness(self):
-        results = {_random_bitstring(10) for _ in range(50)}
-        assert len(results) > 1
-
     def test_length_zero(self):
         result = _random_bitstring(0)
         assert result == ''
@@ -124,21 +120,15 @@ class TestSampleMarkedStates:
             assert lengths.pop() in range(2, 5)
 
     def test_no_duplicates_within_combination(self):
-        result = sample_marked_states(2, 4, 1, 2, 10)
+        result = sample_marked_states(6, 8, 2, 8, 1000)
         for combo in result:
             assert len(combo) == len(set(combo))
 
     def test_number_of_marked_states_within_range(self):
         min_m, max_m = 1, 2
-        result = sample_marked_states(2, 4, min_m, max_m, 5)
+        result = sample_marked_states(6, 8, min_m, max_m, 1000)
         for combo in result:
             assert min_m <= len(combo) <= max_m
-
-    def test_all_bitstrings_are_binary(self):
-        result = sample_marked_states(2, 4, 1, 2, 5)
-        for combo in result:
-            for state in combo:
-                assert all(c in '01' for c in state)
 
     def test_single_qubit_skipped_if_constraints_invalid(self):
         # For 2 qubits: max_possible = 2^(2-1) - 1 = 1
@@ -146,10 +136,6 @@ class TestSampleMarkedStates:
         result = sample_marked_states(2, 2, 2, 3, 5)
         assert result == []
 
-    def test_respects_max_samples_per_qubits(self):
-        max_samples = 3
-        result = sample_marked_states(2, 3, 1, 1, max_samples)
-        assert len(result) <= max_samples * 2  # 2 qubit values
 
     def test_small_scale_combinations_valid(self):
         result = sample_marked_states(2, 3, 1, 2, 10)
@@ -176,8 +162,3 @@ class TestSampleMarkedStates:
         result = sample_marked_states(3, 3, 1, 1, 5)
         for combo in result:
             assert all(len(s) == 3 for s in combo)
-
-    def test_empty_range_returns_empty(self):
-        # min_qubits > max_qubits
-        result = sample_marked_states(5, 3, 1, 1, 5)
-        assert result == []

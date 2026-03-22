@@ -25,6 +25,20 @@ def sample_marked_states(
     num_samples_per_qubits,
     max_attempts=1000,
 ):
+    if min_qubits > max_qubits:
+        raise ValueError(f"min_qubits ({min_qubits}) cannot be greater than max_qubits ({max_qubits})")
+    if min_marked_states > max_marked_states:
+        raise ValueError(f"min_marked_states ({min_marked_states}) cannot be greater than max_marked_states ({max_marked_states})")
+    
+    if min_marked_states < 1:
+        raise ValueError("min_marked_states must be at least 1 to ensure valid marked states.")
+    if max_marked_states < 1:
+        raise ValueError("max_marked_states must be at least 1 to ensure valid marked states.")
+    if min_qubits < 1:
+        raise ValueError("min_qubits must be at least 1 to have valid qubits.")
+    if max_qubits < 1:
+        raise ValueError("max_qubits must be at least 1 to have valid qubits.")
+
     sampled_marked_states = set()
 
     for num_qubits in range(min_qubits, max_qubits + 1):
@@ -68,6 +82,7 @@ def sample_marked_states(
                     else:
                         attempts += 1
 
+    # Transform to list of lists for JSON serialization
     sampled_marked_states = [list(combination) for combination in sampled_marked_states]
 
     return sampled_marked_states
