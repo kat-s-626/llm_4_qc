@@ -10,6 +10,7 @@ export visualization="$project_root/visualization"
 export logs="$project_root/logs"
 export parsed_logs="$visualization/parsed_logs"
 export figs="$visualization/figures"
+export models="$project_root/models"
 
 # venv
 export venv="$project_root/venv/bin/activate"

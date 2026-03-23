@@ -22,12 +22,12 @@ source $venv || {
 #     --csv-path "$parsed_logs/groverset_stage_1_mae/grpo_metrics_aggregated.csv" \
 #     --output-dir "$figs/groverset_stage_1_mae" \
 
-mkdir -p "$parsed_logs/groverset_stage_1_tvd"
+mkdir -p "$parsed_logs/groverset_sftgrpo"
 
 python -m visualization.utils.grpo_log_parser \
-    --log-dir "$logs/groverset_stage_1_tvd" \
-    --output-dir "$parsed_logs/groverset_stage_1_tvd" \
+    --log-dir "$logs/groverset_sftgrpo" \
+    --output-dir "$parsed_logs/groverset_sftgrpo" \
 
 python -m visualization.plot_grpo_train \
-    --csv-path "$parsed_logs/groverset_stage_1_tvd/grpo_metrics_aggregated.csv" \
-    --output-dir "$figs/groverset_stage_1_tvd" \
+    --csv-path "$parsed_logs/groverset_sftgrpo/grpo_metrics_aggregated.csv" \
+    --output-dir "$figs/groverset_sftgrpo" \

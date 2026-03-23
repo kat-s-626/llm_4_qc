@@ -19,34 +19,31 @@ PLOT_METRICS = (
 )
 
 
-def parse_args() -> argparse.Namespace:
-	parser = argparse.ArgumentParser(description="Plot GRPO metrics from aggregated CSV.")
-	parser.add_argument(
-		"--csv-path",
-		type=Path,
-		required=True,
-		help="Path to aggregated metrics CSV from grpo_log_parser.",
-	)
-	parser.add_argument(
-		"--output-dir",
-		type=Path,
-		default=Path(FIG_DIR),
-		help="Directory for saved plots. Defaults to config.paths.FIG_DIR.",
-	)
-	parser.add_argument(
-		"--reward-plot-file",
-		type=str,
-		default="grpo_reward_curve.png",
-		help="Filename for reward-vs-step plot.",
-	)
-	parser.add_argument(
-		"--metrics-plot-file",
-		type=str,
-		default="grpo_selected_metrics.png",
-		help="Filename for selected metrics subplot figure.",
-	)
-	return parser.parse_args()
+def summarize_selected_metrics(df: pd.DataFrame) -> list[tuple[str, float, float]]:
+	summary: list[tuple[str, float, float]] = []
+	for metric_key, _, _ in PLOT_METRICS:
+		if metric_key not in df.columns:
+			continue
+		series = pd.to_numeric(df[metric_key], errors="coerce").dropna()
+		if series.empty:
+			continue
+		summary.append((metric_key, float(series.min()), float(series.max())))
+	return summary
 
+
+def write_selected_metrics_summary(summary: list[tuple[str, float, float]], output_file: Path) -> bool:
+	if not summary:
+		return False
+
+	lines = ["Selected metrics min/max values", ""]
+	for metric_key, min_value, max_value in summary:
+		lines.append(f"{metric_key}")
+		lines.append(f"  min: {min_value:.6g}")
+		lines.append(f"  max: {max_value:.6g}")
+		lines.append("")
+
+	output_file.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+	return True
 
 def clean_spines(axis: plt.Axes) -> None:
 	axis.spines["top"].set_visible(False)
@@ -129,6 +126,41 @@ def plot_selected_metrics(df: pd.DataFrame, output_file: Path) -> bool:
 	plt.close(fig)
 	return has_any_data
 
+def parse_args() -> argparse.Namespace:
+	parser = argparse.ArgumentParser(description="Plot GRPO metrics from aggregated CSV.")
+	parser.add_argument(
+		"--csv-path",
+		type=Path,
+		required=True,
+		help="Path to aggregated metrics CSV from grpo_log_parser.",
+	)
+	parser.add_argument(
+		"--output-dir",
+		type=Path,
+		default=Path(FIG_DIR),
+		help="Directory for saved plots. Defaults to config.paths.FIG_DIR.",
+	)
+	parser.add_argument(
+		"--reward-plot-file",
+		type=str,
+		default="grpo_reward_curve.png",
+		help="Filename for reward-vs-step plot.",
+	)
+	parser.add_argument(
+		"--metrics-plot-file",
+		type=str,
+		default="grpo_selected_metrics.png",
+		help="Filename for selected metrics subplot figure.",
+	)
+	parser.add_argument(
+		"--metrics-summary-file",
+		type=str,
+		default="grpo_selected_metrics_min_max.txt",
+		help="Filename for selected metrics min/max summary.",
+	)
+	return parser.parse_args()
+
+
 
 def main() -> None:
 	args = parse_args()
@@ -142,9 +174,12 @@ def main() -> None:
 	df = load_metrics(csv_path)
 	reward_plot_path = output_dir / args.reward_plot_file
 	metrics_plot_path = output_dir / args.metrics_plot_file
+	metrics_summary_path = output_dir / args.metrics_summary_file
 
 	reward_saved = plot_reward_curve(df, reward_plot_path)
 	metrics_saved = plot_selected_metrics(df, metrics_plot_path)
+	summary = summarize_selected_metrics(df)
+	summary_saved = write_selected_metrics_summary(summary, metrics_summary_path)
 
 	print(f"Loaded rows: {len(df)}")
 	print(f"CSV source: {csv_path}")
@@ -156,6 +191,10 @@ def main() -> None:
 		print(f"Selected metrics plot saved to: {metrics_plot_path}")
 	else:
 		print("Selected metrics plot skipped: no plottable metric data.")
+	if summary_saved:
+		print(f"Selected metrics min/max summary saved to: {metrics_summary_path}")
+	else:
+		print("Selected metrics min/max summary skipped: no valid selected metric data.")
 
 
 if __name__ == "__main__":
