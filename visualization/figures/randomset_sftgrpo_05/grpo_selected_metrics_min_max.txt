@@ -1,0 +1,13 @@
+Selected metrics min/max values
+
+critic/rewards/mean
+  min: 0
+  max: 0.403125
+
+actor/entropy
+  min: 0.0469142
+  max: 0.370821
+
+response_length/mean
+  min: 4383.26
+  max: 12085.5

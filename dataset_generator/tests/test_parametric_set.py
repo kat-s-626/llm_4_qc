@@ -2,9 +2,9 @@ import json
 import math
 from qiskit import QuantumCircuit, qasm3
 from qiskit.quantum_info import Statevector
-from dataset_generator.src.random_set import (
+from dataset_generator.src.parametric_set import (
     generate_random_circuit,
-    generate_random_set,
+    generate_parametric_set,
     _select_gate,
     _get_measurement_probabilities,
     _get_circuit_hash,
@@ -39,7 +39,7 @@ class TestSelectGate:
         assert all(g in [0, 1, 2] for g in results)
         assert {0, 1, 2}.issubset(set(results))
 
-class TestGenerateRandomSetCircuit:
+class TestGenerateParametricSetCircuit:
     """Test the main circuit generation function."""
 
     def test_circuit_creation(self):
@@ -132,11 +132,11 @@ class TestGenerateRandomSetCircuit:
                 assert qubits[0] != qubits[1]  # Control and target should differ
 
 
-class TestRandomSetConfiguration:
+class TestParametricSetConfiguration:
     """Test the configuration constants."""
 
     def test_gate_set_contents(self):
-        """Gate set should contain valid gate names used by random_set."""
+        """Gate set should contain valid gate names used by parametric_set."""
         valid_gate_names = {
             "h", "x", "z", "rx", "ry", "rz", "cx", "cz", "mcx", "mcmt"
         }
@@ -203,11 +203,11 @@ class TestOutputFormat:
             assert 'num_controls' in gate_info
             assert 'num_targets' in gate_info
 
-    def test_generate_random_set_jsonl_output(self, tmp_path):
-        """generate_random_set should write valid JSONL records with required fields."""
-        output_path = tmp_path / "random_set.jsonl"
+    def test_generate_parametric_set_jsonl_output(self, tmp_path):
+        """generate_parametric_set should write valid JSONL records with required fields."""
+        output_path = tmp_path / "parametric_set.jsonl"
 
-        generate_random_set(
+        generate_parametric_set(
             num_circuits=3,
             min_num_qubits=2,
             max_num_qubits=3,

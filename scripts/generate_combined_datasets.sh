@@ -15,8 +15,8 @@ source $venv || {
 python -m dataset_generator.src.generate_combined_set 
 
 # Generate the parquet files 
-input_file="$random_set_dir/final_combined_dataset.jsonl"
-local_dir="$random_set_dir/sft_grpo_datasets"
+input_file="$parametric_set_dir/final_combined_dataset.jsonl"
+local_dir="$parametric_set_dir/sft_grpo_datasets"
 mkdir -p "$local_dir"
 
 
@@ -25,4 +25,4 @@ python -m verl.experiments.preprocess_combined_set \
     --local_dir "$local_dir" \
     --shuffle
 
-cp $random_set_dir/sft_datasets/test_1.parquet $local_dir/test_1.parquet
+cp $parametric_set_dir/sft_datasets/test_1.parquet $local_dir/test_1.parquet

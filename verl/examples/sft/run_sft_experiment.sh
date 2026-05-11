@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=grover_set_sft
+#SBATCH --job-name=non_parametric_set_sft
 #SBATCH --time=08:00:00
 #SBATCH --mem=500GB
 #SBATCH --gpus-per-node=4
@@ -7,7 +7,7 @@
 #SBATCH --cpus-per-task=72
 #SBATCH --nodes=4
 #SBATCH --mail-type=ALL
-#SBATCH --output="../sbatch_log/grover_set_sft/%A.out"
+#SBATCH --output="../sbatch_log/non_parametric_set_sft/%A.out"
 
 set -x
 
@@ -20,7 +20,7 @@ export HF_HOME="$HOME/.cache/HuggingFace"
 export PIP_CACHE_DIR="$HOME/.cache/pip"
 export FLASH_ATTENTION_FORCE_DISABLED=1 
 
-PROJECT_NAME="grover_set_sft"
+PROJECT_NAME="non_parametric_set_sft"
 
 verl_workdir=$PROJECT_PATH/verl
 venv_path=$PROJECT_PATH/verl/venv

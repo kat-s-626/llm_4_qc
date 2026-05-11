@@ -10,7 +10,7 @@ from config.paths import DATA_DIR, QWEN_8B_DIR
 
 qwen_model_path = QWEN_8B_DIR
 MAX_TOKENS = 17500
-CIRCUIT_SETS = "random_sets"
+CIRCUIT_SETS = "parametric_sets"
 
 # combine the random gate circuits dataset with the openMath and openCode datasets
 # Read from json lines files

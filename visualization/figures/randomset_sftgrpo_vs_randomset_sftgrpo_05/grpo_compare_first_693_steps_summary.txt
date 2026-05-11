@@ -1,0 +1,37 @@
+Comparison summary up to step 693
+
+Mean Reward (critic/rewards/mean)
+  TVD <= 0.01:
+    min: 0
+    max: 0.01875
+    final: 0.003125
+    mean: 0.00335047
+  TVD <= 0.05:
+    min: 0
+    max: 0.04375
+    final: 0.028125
+    mean: 0.0114493
+
+Actor Entropy (actor/entropy)
+  TVD <= 0.01:
+    min: 0.315606
+    max: 0.375234
+    final: 0.332225
+    mean: 0.344798
+  TVD <= 0.05:
+    min: 0.276281
+    max: 0.370821
+    final: 0.301233
+    mean: 0.336303
+
+Mean Response Length (response_length/mean)
+  TVD <= 0.01:
+    min: 10254.8
+    max: 12223.4
+    final: 11071.2
+    mean: 11353.1
+  TVD <= 0.05:
+    min: 9274.28
+    max: 12085.5
+    final: 9981.53
+    mean: 11052.1

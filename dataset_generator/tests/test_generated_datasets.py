@@ -27,14 +27,14 @@ def dataset(request):
 
 
 @pytest.fixture(params=[
-    "/scratch3/ip004/data/grover_sets/train_updated.jsonl",
-    "/scratch3/ip004/data/grover_sets/test_1_updated.jsonl",
-    "/scratch3/ip004/data/grover_sets/test_2_updated.jsonl",
-    "/scratch3/ip004/data/grover_sets/test_3_updated.jsonl",
-    "/scratch3/ip004/data/rotation_sets/train_updated.jsonl",
-    "/scratch3/ip004/data/rotation_sets/test_1_updated.jsonl",
-    "/scratch3/ip004/data/rotation_sets/test_2_updated.jsonl",
-    "/scratch3/ip004/data/rotation_sets/test_3_updated.jsonl",
+    "/scratch3/ip004/data/non_parametric_sets/train_updated.jsonl",
+    "/scratch3/ip004/data/non_parametric_sets/test_1_updated.jsonl",
+    "/scratch3/ip004/data/non_parametric_sets/test_2_updated.jsonl",
+    "/scratch3/ip004/data/non_parametric_sets/test_3_updated.jsonl",
+    "/scratch3/ip004/data/parametric_sets/train_updated.jsonl",
+    "/scratch3/ip004/data/parametric_sets/test_1_updated.jsonl",
+    "/scratch3/ip004/data/parametric_sets/test_2_updated.jsonl",
+    "/scratch3/ip004/data/parametric_sets/test_3_updated.jsonl",
 ])
 def dataset_path(request):
     """Parametrized fixture to test all datasets."""
@@ -234,14 +234,14 @@ class TestQuantumCircuitProperties:
 class TestDatasetCounts:
     
     @pytest.mark.parametrize("dataset_path,length", [
-        ("/scratch3/ip004/data/grover_sets/train_updated.jsonl", 100000),
-        ("/scratch3/ip004/data/grover_sets/test_1_updated.jsonl", 10000),
-        ("/scratch3/ip004/data/grover_sets/test_2_updated.jsonl", 4000),
-        ("/scratch3/ip004/data/grover_sets/test_3_updated.jsonl", 4000),
-        ("/scratch3/ip004/data/rotation_sets/train_updated.jsonl", 100000), 
-        ("/scratch3/ip004/data/rotation_sets/test_1_updated.jsonl", 10000),
-        ("/scratch3/ip004/data/rotation_sets/test_2_updated.jsonl", 4000),
-        ("/scratch3/ip004/data/rotation_sets/test_3_updated.jsonl", 4000),
+        ("/scratch3/ip004/data/non_parametric_sets/train_updated.jsonl", 100000),
+        ("/scratch3/ip004/data/non_parametric_sets/test_1_updated.jsonl", 10000),
+        ("/scratch3/ip004/data/non_parametric_sets/test_2_updated.jsonl", 4000),
+        ("/scratch3/ip004/data/non_parametric_sets/test_3_updated.jsonl", 4000),
+        ("/scratch3/ip004/data/parametric_sets/train_updated.jsonl", 100000), 
+        ("/scratch3/ip004/data/parametric_sets/test_1_updated.jsonl", 10000),
+        ("/scratch3/ip004/data/parametric_sets/test_2_updated.jsonl", 4000),
+        ("/scratch3/ip004/data/parametric_sets/test_3_updated.jsonl", 4000),
     ])
 
     def test_dataset_counts(self, dataset_path, length):

@@ -12,22 +12,22 @@ source $venv || {
     exit 1
 }
 
-# mkdir -p "$parsed_logs/groverset_stage_1_mae"
+# mkdir -p "$parsed_logs/non_parametric_set_stage_1_mae"
 
 # python -m visualization.utils.grpo_log_parser \
-#     --log-dir "$logs/groverset_stage_1_mae" \
-#     --output-dir "$parsed_logs/groverset_stage_1_mae" \
+#     --log-dir "$logs/non_parametric_set_stage_1_mae" \
+#     --output-dir "$parsed_logs/non_parametric_set_stage_1_mae" \
 
 # python -m visualization.plot_grpo_train \
-#     --csv-path "$parsed_logs/groverset_stage_1_mae/grpo_metrics_aggregated.csv" \
-#     --output-dir "$figs/groverset_stage_1_mae" \
+#     --csv-path "$parsed_logs/non_parametric_set_stage_1_mae/grpo_metrics_aggregated.csv" \
+#     --output-dir "$figs/non_parametric_set_stage_1_mae" \
 
-mkdir -p "$parsed_logs/groverset_sftgrpo"
+mkdir -p "$parsed_logs/parametric_set_sftgrpo"
 
 python -m visualization.utils.grpo_log_parser \
-    --log-dir "$logs/groverset_sftgrpo" \
-    --output-dir "$parsed_logs/groverset_sftgrpo" \
+    --log-dir "$logs/parametric_set_sftgrpo" \
+    --output-dir "$parsed_logs/parametric_set_sftgrpo" \
 
 python -m visualization.plot_grpo_train \
-    --csv-path "$parsed_logs/groverset_sftgrpo/grpo_metrics_aggregated.csv" \
-    --output-dir "$figs/groverset_sftgrpo" \
+    --csv-path "$parsed_logs/parametric_set_sftgrpo/grpo_metrics_aggregated.csv" \
+    --output-dir "$figs/parametric_set_sftgrpo" \

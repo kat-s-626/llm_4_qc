@@ -22,7 +22,7 @@ import os
 
 dotenv.load_dotenv()
 RESULT_DIR = os.getenv("RESULT_DIR")
-TESTING_OUTPUT_FILE = f"{RESULT_DIR}/grover_sets/sft_datasets/qwen3_8b_special/test_1_output_0.parquet"
+TESTING_OUTPUT_FILE = f"{RESULT_DIR}/non_parametric_sets/sft_datasets/qwen3_8b_special/test_1_output_0.parquet"
 
 
 def data_instance():

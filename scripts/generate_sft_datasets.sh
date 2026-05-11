@@ -12,20 +12,20 @@ source $venv || {
     exit 1
 }
 
-RANDOM_SET_PATH="$data/random_sets"
+PARAMETRIC_SET_PATH="$data/parametric_sets"
 
 # Configuration
 TOTAL_SIZE=22000
 TRAINING_SET_SIZE=20000
 TEST_SET_SIZE=2000
-TEMP_OUTPUT_FILE="$RANDOM_SET_PATH/temp_circuits.jsonl"
-TRAINING_OUTPUT_FILE="$RANDOM_SET_PATH/train.jsonl"
-TEST_OUTPUT_FILE_1="$RANDOM_SET_PATH/test_1.jsonl"
-TEST_OUTPUT_FILE_2="$RANDOM_SET_PATH/test_2.jsonl"
-TEST_OUTPUT_FILE_3="$RANDOM_SET_PATH/test_3.jsonl"
+TEMP_OUTPUT_FILE="$PARAMETRIC_SET_PATH/temp_circuits.jsonl"
+TRAINING_OUTPUT_FILE="$PARAMETRIC_SET_PATH/train.jsonl"
+TEST_OUTPUT_FILE_1="$PARAMETRIC_SET_PATH/test_1.jsonl"
+TEST_OUTPUT_FILE_2="$PARAMETRIC_SET_PATH/test_2.jsonl"
+TEST_OUTPUT_FILE_3="$PARAMETRIC_SET_PATH/test_3.jsonl"
 
 # make sure output directory exists
-mkdir -p "$RANDOM_SET_PATH"
+mkdir -p "$PARAMETRIC_SET_PATH"
 
 # Function to generate and split circuits
 generate_circuits() {
@@ -40,7 +40,7 @@ generate_circuits() {
     echo "Generating: qubits [$min_qubits-$max_qubits], gates [$min_gates-$max_gates] -> $description"
 
     
-    python -m dataset_generator.src.random_set \
+    python -m dataset_generator.src.parametric_set \
         --num_circuits $num_circuits \
         --min_num_qubits $min_qubits \
         --max_num_qubits $max_qubits \
@@ -67,7 +67,7 @@ generate_circuits_test_only() {
     echo "Generating: qubits [$min_qubits-$max_qubits], gates [$min_gates-$max_gates] -> $description"
 
     
-    python -m dataset_generator.src.random_set \
+    python -m dataset_generator.src.parametric_set \
         --num_circuits $num_circuits \
         --min_num_qubits $min_qubits \
         --max_num_qubits $max_qubits \
@@ -135,10 +135,10 @@ generate_reasoning_traces() {
 }
 
 # Generate reasoning traces for each entry
-generate_reasoning_traces $RANDOM_SET_PATH/train.jsonl $RANDOM_SET_PATH/train_updated.jsonl
-generate_reasoning_traces $RANDOM_SET_PATH/test_1.jsonl $RANDOM_SET_PATH/test_1_updated.jsonl
-generate_reasoning_traces $RANDOM_SET_PATH/test_2.jsonl $RANDOM_SET_PATH/test_2_updated.jsonl
-generate_reasoning_traces $RANDOM_SET_PATH/test_3.jsonl $RANDOM_SET_PATH/test_3_updated.jsonl
+generate_reasoning_traces $PARAMETRIC_SET_PATH/train.jsonl $PARAMETRIC_SET_PATH/train_updated.jsonl
+generate_reasoning_traces $PARAMETRIC_SET_PATH/test_1.jsonl $PARAMETRIC_SET_PATH/test_1_updated.jsonl
+generate_reasoning_traces $PARAMETRIC_SET_PATH/test_2.jsonl $PARAMETRIC_SET_PATH/test_2_updated.jsonl
+generate_reasoning_traces $PARAMETRIC_SET_PATH/test_3.jsonl $PARAMETRIC_SET_PATH/test_3_updated.jsonl
 
 # Arguments:
 #   --input_file       (required) Path to input JSON lines file containing raw training data
@@ -161,12 +161,12 @@ generate_sft_parquet() {
     mv "$local_dir"/train.parquet "$local_dir"/$output_file
 }
 
-local_dir="$RANDOM_SET_PATH/sft_datasets"
+local_dir="$PARAMETRIC_SET_PATH/sft_datasets"
 
-generate_sft_parquet "$RANDOM_SET_PATH/train_updated.jsonl" "train_updated.parquet" "$local_dir"
-generate_sft_parquet "$RANDOM_SET_PATH/test_1_updated.jsonl" "test_1.parquet" "$local_dir"
-generate_sft_parquet "$RANDOM_SET_PATH/test_2_updated.jsonl" "test_2.parquet" "$local_dir"
-generate_sft_parquet "$RANDOM_SET_PATH/test_3_updated.jsonl" "test_3.parquet" "$local_dir"
+generate_sft_parquet "$PARAMETRIC_SET_PATH/train_updated.jsonl" "train_updated.parquet" "$local_dir"
+generate_sft_parquet "$PARAMETRIC_SET_PATH/test_1_updated.jsonl" "test_1.parquet" "$local_dir"
+generate_sft_parquet "$PARAMETRIC_SET_PATH/test_2_updated.jsonl" "test_2.parquet" "$local_dir"
+generate_sft_parquet "$PARAMETRIC_SET_PATH/test_3_updated.jsonl" "test_3.parquet" "$local_dir"
 
 # Rename the training set back to train.parquet at the end
 mv "$local_dir/train_updated.parquet" "$local_dir/train.parquet"

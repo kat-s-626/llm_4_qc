@@ -968,6 +968,43 @@ def evaluate_model_performance(df: pd.DataFrame, model_name='Qwen/Qwen3-0.6B', s
         'metrics_by_circuit_depth': {},  # All metrics by circuit depth (binned)
         'metrics_by_num_qubits': {},  # All metrics by number of qubits
         'metrics_by_num_gates': {},  # All metrics by number of gates (binned)
+        # --- Part 2: LSB metrics ---
+        'lsb_avg_classical_fidelity': 0.0,
+        'lsb_avg_f1_score': 0.0,
+        'lsb_avg_mae': 0.0,
+        'lsb_avg_tvd_topk': 0.0,
+        'lsb_avg_search_accuracy': 0.0,
+        'lsb_classical_parse_success_rate': 0.0,
+        'lsb_json_parse_success_rate': 0.0,
+        'lsb_perfect_classical_fidelity_count': 0,
+        'lsb_perfect_classical_fidelity_rate': 0.0,
+        'lsb_perfect_match_count': 0,
+        'lsb_perfect_match_rate': 0.0,
+        'lsb_perfect_match_count_mae_0_01': 0,
+        'lsb_perfect_match_rate_mae_0_01': 0.0,
+        'lsb_perfect_match_count_mae_0_05': 0,
+        'lsb_perfect_match_rate_mae_0_05': 0.0,
+        'lsb_perfect_match_count_mae_0_1': 0,
+        'lsb_perfect_match_rate_mae_0_1': 0.0,
+        'lsb_perfect_match_count_tvd_0_01': 0,
+        'lsb_perfect_match_rate_tvd_0_01': 0.0,
+        'lsb_perfect_match_count_tvd_0_05': 0,
+        'lsb_perfect_match_rate_tvd_0_05': 0.0,
+        'lsb_perfect_match_count_tvd_0_1': 0,
+        'lsb_perfect_match_rate_tvd_0_1': 0.0,
+        'lsb_perfect_match_count_tvd_0_2': 0,
+        'lsb_perfect_match_rate_tvd_0_2': 0.0,
+        'lsb_perfect_match_count_tvd_0': 0,
+        'lsb_perfect_match_rate_tvd_0': 0.0,
+        'lsb_token_efficiency_mae_0_005': 0.0,
+        'lsb_token_efficiency_mae_0_01': 0.0,
+        'lsb_token_efficiency_mae_0_05': 0.0,
+        'lsb_token_efficiency_mae_0_1': 0.0,
+        'lsb_token_efficiency_tvd_0_01': 0.0,
+        'lsb_token_efficiency_tvd_0_05': 0.0,
+        'lsb_token_efficiency_tvd_0_1': 0.0,
+        'lsb_token_efficiency_tvd_0_2': 0.0,
+        'lsb_token_efficiency_tvd_0': 0.0,
     }
     
     # Store individual results if requested
@@ -1001,6 +1038,24 @@ def evaluate_model_performance(df: pd.DataFrame, model_name='Qwen/Qwen3-0.6B', s
     perfect_match_count_tvd_0_1 = 0
     perfect_match_count_tvd_0_2 = 0
     perfect_match_count_tvd_0 = 0
+    # --- Part 2: LSB tracking variables ---
+    classical_fidelity_scores_lsb = []
+    f1_scores_lsb = []
+    mae_scores_lsb = []
+    tvd_topk_scores_lsb = []
+    search_acc_scores_lsb = []
+    classical_parse_success_count_lsb = 0
+    json_parse_success_count_lsb = 0
+    perfect_classical_fidelity_count_lsb = 0
+    perfect_match_count_lsb = 0
+    perfect_match_count_mae_0_01_lsb = 0
+    perfect_match_count_mae_0_05_lsb = 0
+    perfect_match_count_mae_0_1_lsb = 0
+    perfect_match_count_tvd_0_01_lsb = 0
+    perfect_match_count_tvd_0_05_lsb = 0
+    perfect_match_count_tvd_0_1_lsb = 0
+    perfect_match_count_tvd_0_2_lsb = 0
+    perfect_match_count_tvd_0_lsb = 0
     step_fidelity_dict = defaultdict(list)  # Track fidelities for each step position
     step_fidelity_by_qubits_dict = defaultdict(lambda: defaultdict(list))  # Track step-wise fidelities by number of qubits
     
@@ -1080,6 +1135,24 @@ def evaluate_model_performance(df: pd.DataFrame, model_name='Qwen/Qwen3-0.6B', s
             'response': response,
             'ground_truth': ground_truth,
             'ground_truth_prob_source': prob_source_key,
+            # Part 2: LSB fields
+            'classical_fidelity_lsb': None,
+            'f1_score_lsb': None,
+            'mae_lsb': None,
+            'tvd_topk_lsb': None,
+            'search_acc_lsb': None,
+            'classical_parse_success_lsb': False,
+            'json_parse_success_lsb': False,
+            'perfect_classical_fidelity_lsb': False,
+            'perfect_match_lsb': False,
+            'perfect_match_mae_0_01_lsb': False,
+            'perfect_match_mae_0_05_lsb': False,
+            'perfect_match_mae_0_1_lsb': False,
+            'perfect_match_tvd_0_01_lsb': False,
+            'perfect_match_tvd_0_05_lsb': False,
+            'perfect_match_tvd_0_1_lsb': False,
+            'perfect_match_tvd_0_2_lsb': False,
+            'perfect_match_tvd_0_lsb': False,
         }
         
         if not response:
@@ -1270,7 +1343,105 @@ def evaluate_model_performance(df: pd.DataFrame, model_name='Qwen/Qwen3-0.6B', s
                 
                 tvd_topk_scores.append(1.0)
                 individual_result['tvd_topk'] = 1.0
-        
+
+        # --- Part 2: LSB evaluation ---
+        # Extract lsb_measurement_probabilities directly from extra_info
+        lsb_raw = extra_info.get('lsb_measurement_probabilities')
+        ground_truth_prob_lsb: Dict[str, float] = {}
+        if lsb_raw not in (None, '', {}):
+            parsed_lsb = _parse_extra_info_field(lsb_raw)
+            if isinstance(parsed_lsb, dict):
+                try:
+                    ground_truth_prob_lsb = {str(k): float(v) for k, v in parsed_lsb.items()}
+                except (TypeError, ValueError):
+                    ground_truth_prob_lsb = {}
+
+        num_qubits_lsb = 0
+        if ground_truth_prob_lsb:
+            first_key_lsb = next(iter(ground_truth_prob_lsb.keys()), None)
+            if first_key_lsb:
+                num_qubits_lsb = len(first_key_lsb)
+
+        # Classical fidelity (LSB)
+        if ground_truth_prob_lsb:
+            pred_prob_dist_lsb = parse_probability_distribution(response)
+            if pred_prob_dist_lsb:
+                classical_parse_success_count_lsb += 1
+                individual_result['classical_parse_success_lsb'] = True
+                classical_fid_lsb = compute_classical_fidelity(pred_prob_dist_lsb, ground_truth_prob_lsb)
+                classical_fidelity_scores_lsb.append(classical_fid_lsb)
+                individual_result['classical_fidelity_lsb'] = classical_fid_lsb
+                if classical_fid_lsb >= CLASSICAL_FIDELITY_THRESHOLD:
+                    perfect_classical_fidelity_count_lsb += 1
+                    individual_result['perfect_classical_fidelity_lsb'] = True
+            else:
+                classical_fidelity_scores_lsb.append(0.0)
+                individual_result['classical_fidelity_lsb'] = 0.0
+
+        # F1, MAE, TVD, search accuracy (LSB)
+        if ground_truth_prob_lsb:
+            pred_json_dist_lsb = extract_probability_distribution_from_json(response)
+            if pred_json_dist_lsb:
+                json_parse_success_count_lsb += 1
+                individual_result['json_parse_success_lsb'] = True
+
+                if len(marked_states) > 0:
+                    search_accuracy_lsb = search_acc(pred_json_dist_lsb, marked_states)
+                    search_acc_scores_lsb.append(search_accuracy_lsb)
+                    individual_result['search_acc_lsb'] = search_accuracy_lsb
+
+                f1_lsb = compute_f1_score(pred_json_dist_lsb, ground_truth_prob_lsb)
+                f1_scores_lsb.append(f1_lsb)
+                individual_result['f1_score_lsb'] = f1_lsb
+
+                mae_lsb = compute_mae(pred_json_dist_lsb, ground_truth_prob_lsb, num_qubits_lsb)
+                mae_scores_lsb.append(mae_lsb)
+                individual_result['mae_lsb'] = mae_lsb
+
+                pred_states_sorted_lsb = sorted(pred_json_dist_lsb.items(), key=lambda x: x[1], reverse=True)
+                true_states_sorted_lsb = sorted(ground_truth_prob_lsb.items(), key=lambda x: x[1], reverse=True)
+                k_lsb = 15
+                pred_topk_lsb = dict(pred_states_sorted_lsb[:k_lsb])
+                true_topk_lsb = dict(true_states_sorted_lsb[:k_lsb])
+                tvd_topk_lsb = tvd_topk_renormalized(pred_topk_lsb, true_topk_lsb, k=k_lsb)
+                tvd_topk_scores_lsb.append(tvd_topk_lsb)
+                individual_result['tvd_topk_lsb'] = tvd_topk_lsb
+
+                if f1_lsb == 1.0 and mae_lsb < MAE_THRESHOLD and format_acc_value == 1.0:
+                    perfect_match_count_lsb += 1
+                    individual_result['perfect_match_lsb'] = True
+                if f1_lsb == 1.0 and mae_lsb < 0.01 and format_acc_value == 1.0:
+                    perfect_match_count_mae_0_01_lsb += 1
+                    individual_result['perfect_match_mae_0_01_lsb'] = True
+                if f1_lsb == 1.0 and mae_lsb < 0.05 and format_acc_value == 1.0:
+                    perfect_match_count_mae_0_05_lsb += 1
+                    individual_result['perfect_match_mae_0_05_lsb'] = True
+                if f1_lsb == 1.0 and mae_lsb < 0.1 and format_acc_value == 1.0:
+                    perfect_match_count_mae_0_1_lsb += 1
+                    individual_result['perfect_match_mae_0_1_lsb'] = True
+                if f1_lsb == 1.0 and tvd_topk_lsb < 0.01 and format_acc_value == 1.0:
+                    perfect_match_count_tvd_0_01_lsb += 1
+                    individual_result['perfect_match_tvd_0_01_lsb'] = True
+                if f1_lsb == 1.0 and tvd_topk_lsb < 0.05 and format_acc_value == 1.0:
+                    perfect_match_count_tvd_0_05_lsb += 1
+                    individual_result['perfect_match_tvd_0_05_lsb'] = True
+                if f1_lsb == 1.0 and tvd_topk_lsb < 0.1 and format_acc_value == 1.0:
+                    perfect_match_count_tvd_0_1_lsb += 1
+                    individual_result['perfect_match_tvd_0_1_lsb'] = True
+                if f1_lsb == 1.0 and tvd_topk_lsb < 0.2 and format_acc_value == 1.0:
+                    perfect_match_count_tvd_0_2_lsb += 1
+                    individual_result['perfect_match_tvd_0_2_lsb'] = True
+                if f1_lsb == 1.0 and tvd_topk_lsb == 0.0 and format_acc_value == 1.0:
+                    perfect_match_count_tvd_0_lsb += 1
+                    individual_result['perfect_match_tvd_0_lsb'] = True
+            else:
+                f1_scores_lsb.append(0.0)
+                individual_result['f1_score_lsb'] = 0.0
+                mae_scores_lsb.append(1.0)
+                individual_result['mae_lsb'] = 1.0
+                tvd_topk_scores_lsb.append(1.0)
+                individual_result['tvd_topk_lsb'] = 1.0
+
         # Track all metrics by circuit characteristics
         metric_values = {
             'fidelity': individual_result.get('fidelity'),
@@ -1445,7 +1616,53 @@ def evaluate_model_performance(df: pd.DataFrame, model_name='Qwen/Qwen3-0.6B', s
         results['token_efficiency_tvd_0_1'] = 0.0
         results['token_efficiency_tvd_0_2'] = 0.0
         results['token_efficiency_tvd_0'] = 0.0
-    
+
+    # --- Part 2: LSB aggregation ---
+    if classical_fidelity_scores_lsb:
+        results['lsb_avg_classical_fidelity'] = np.mean(classical_fidelity_scores_lsb)
+    if f1_scores_lsb:
+        results['lsb_avg_f1_score'] = np.mean(f1_scores_lsb)
+    if mae_scores_lsb:
+        results['lsb_avg_mae'] = np.mean(mae_scores_lsb)
+    if tvd_topk_scores_lsb:
+        results['lsb_avg_tvd_topk'] = np.mean(tvd_topk_scores_lsb)
+    if search_acc_scores_lsb:
+        results['lsb_avg_search_accuracy'] = np.mean(search_acc_scores_lsb)
+
+    results['lsb_classical_parse_success_rate'] = classical_parse_success_count_lsb / len(df) if len(df) > 0 else 0.0
+    results['lsb_json_parse_success_rate'] = json_parse_success_count_lsb / len(df) if len(df) > 0 else 0.0
+    results['lsb_perfect_classical_fidelity_count'] = perfect_classical_fidelity_count_lsb
+    results['lsb_perfect_classical_fidelity_rate'] = perfect_classical_fidelity_count_lsb / len(df) if len(df) > 0 else 0.0
+    results['lsb_perfect_match_count'] = perfect_match_count_lsb
+    results['lsb_perfect_match_rate'] = perfect_match_count_lsb / len(df) if len(df) > 0 else 0.0
+    results['lsb_perfect_match_count_mae_0_01'] = perfect_match_count_mae_0_01_lsb
+    results['lsb_perfect_match_rate_mae_0_01'] = perfect_match_count_mae_0_01_lsb / len(df) if len(df) > 0 else 0.0
+    results['lsb_perfect_match_count_mae_0_05'] = perfect_match_count_mae_0_05_lsb
+    results['lsb_perfect_match_rate_mae_0_05'] = perfect_match_count_mae_0_05_lsb / len(df) if len(df) > 0 else 0.0
+    results['lsb_perfect_match_count_mae_0_1'] = perfect_match_count_mae_0_1_lsb
+    results['lsb_perfect_match_rate_mae_0_1'] = perfect_match_count_mae_0_1_lsb / len(df) if len(df) > 0 else 0.0
+    results['lsb_perfect_match_count_tvd_0_01'] = perfect_match_count_tvd_0_01_lsb
+    results['lsb_perfect_match_rate_tvd_0_01'] = perfect_match_count_tvd_0_01_lsb / len(df) if len(df) > 0 else 0.0
+    results['lsb_perfect_match_count_tvd_0_05'] = perfect_match_count_tvd_0_05_lsb
+    results['lsb_perfect_match_rate_tvd_0_05'] = perfect_match_count_tvd_0_05_lsb / len(df) if len(df) > 0 else 0.0
+    results['lsb_perfect_match_count_tvd_0_1'] = perfect_match_count_tvd_0_1_lsb
+    results['lsb_perfect_match_rate_tvd_0_1'] = perfect_match_count_tvd_0_1_lsb / len(df) if len(df) > 0 else 0.0
+    results['lsb_perfect_match_count_tvd_0_2'] = perfect_match_count_tvd_0_2_lsb
+    results['lsb_perfect_match_rate_tvd_0_2'] = perfect_match_count_tvd_0_2_lsb / len(df) if len(df) > 0 else 0.0
+    results['lsb_perfect_match_count_tvd_0'] = perfect_match_count_tvd_0_lsb
+    results['lsb_perfect_match_rate_tvd_0'] = perfect_match_count_tvd_0_lsb / len(df) if len(df) > 0 else 0.0
+
+    if results['avg_tokens'] > 0:
+        results['lsb_token_efficiency_mae_0_005'] = results['lsb_perfect_match_rate'] / (results['avg_tokens'] / 1000)
+        results['lsb_token_efficiency_mae_0_01'] = results['lsb_perfect_match_rate_mae_0_01'] / (results['avg_tokens'] / 1000)
+        results['lsb_token_efficiency_mae_0_05'] = results['lsb_perfect_match_rate_mae_0_05'] / (results['avg_tokens'] / 1000)
+        results['lsb_token_efficiency_mae_0_1'] = results['lsb_perfect_match_rate_mae_0_1'] / (results['avg_tokens'] / 1000)
+        results['lsb_token_efficiency_tvd_0_01'] = results['lsb_perfect_match_rate_tvd_0_01'] / (results['avg_tokens'] / 1000)
+        results['lsb_token_efficiency_tvd_0_05'] = results['lsb_perfect_match_rate_tvd_0_05'] / (results['avg_tokens'] / 1000)
+        results['lsb_token_efficiency_tvd_0_1'] = results['lsb_perfect_match_rate_tvd_0_1'] / (results['avg_tokens'] / 1000)
+        results['lsb_token_efficiency_tvd_0_2'] = results['lsb_perfect_match_rate_tvd_0_2'] / (results['avg_tokens'] / 1000)
+        results['lsb_token_efficiency_tvd_0'] = results['lsb_perfect_match_rate_tvd_0'] / (results['avg_tokens'] / 1000)
+
     return results
 
 def save_individual_results(results: Dict, output_path: str, parquet_path: str, model_name: str):
@@ -1661,6 +1878,38 @@ def save_individual_results(results: Dict, output_path: str, parquet_path: str, 
                     f.write(f"      Avg TVD Top-k: {metrics['avg_tvd_topk']:.6f}\n")
                 if 'avg_search_acc' in metrics:
                     f.write(f"      Avg Search Accuracy: {metrics['avg_search_acc']:.2%}\n")
+
+        # ---------------------------------------------------------------------
+        f.write("\n" + "="*80 + "\n")
+        f.write("PART 2: LSB MEASUREMENT PROBABILITIES\n")
+        f.write("="*80 + "\n")
+        f.write(f"  Average Classical Fidelity (LSB): {results['lsb_avg_classical_fidelity']:.6f}\n")
+        f.write(f"  Average F1 Score (LSB): {results['lsb_avg_f1_score']:.6f}\n")
+        f.write(f"  Average MAE (LSB): {results['lsb_avg_mae']:.6f}\n")
+        f.write(f"  Average TVD Top-k (LSB, k=15): {results['lsb_avg_tvd_topk']:.6f}\n")
+        f.write(f"  Average Search Accuracy (LSB): {results['lsb_avg_search_accuracy']:.2%}\n")
+        f.write(f"  Classical Parse Success Rate (LSB): {results['lsb_classical_parse_success_rate']:.2%}\n")
+        f.write(f"  JSON Parse Success Rate (LSB): {results['lsb_json_parse_success_rate']:.2%}\n")
+        f.write(f"  Perfect Classical Fidelity (LSB): {results['lsb_perfect_classical_fidelity_count']} ({results['lsb_perfect_classical_fidelity_rate']:.2%})\n")
+        f.write(f"  Perfect Match (F1=1.0 & MAE<{MAE_THRESHOLD}) (LSB): {results['lsb_perfect_match_count']} ({results['lsb_perfect_match_rate']:.2%})\n")
+        f.write(f"  Perfect Match (F1=1.0 & MAE<0.01) (LSB): {results['lsb_perfect_match_count_mae_0_01']} ({results['lsb_perfect_match_rate_mae_0_01']:.2%})\n")
+        f.write(f"  Perfect Match (F1=1.0 & MAE<0.05) (LSB): {results['lsb_perfect_match_count_mae_0_05']} ({results['lsb_perfect_match_rate_mae_0_05']:.2%})\n")
+        f.write(f"  Perfect Match (F1=1.0 & MAE<0.1) (LSB): {results['lsb_perfect_match_count_mae_0_1']} ({results['lsb_perfect_match_rate_mae_0_1']:.2%})\n")
+        f.write(f"  Perfect Match (F1=1.0 & TVD<0.01) (LSB): {results['lsb_perfect_match_count_tvd_0_01']} ({results['lsb_perfect_match_rate_tvd_0_01']:.2%})\n")
+        f.write(f"  Perfect Match (F1=1.0 & TVD<0.05) (LSB): {results['lsb_perfect_match_count_tvd_0_05']} ({results['lsb_perfect_match_rate_tvd_0_05']:.2%})\n")
+        f.write(f"  Perfect Match (F1=1.0 & TVD<0.1) (LSB): {results['lsb_perfect_match_count_tvd_0_1']} ({results['lsb_perfect_match_rate_tvd_0_1']:.2%})\n")
+        f.write(f"  Perfect Match (F1=1.0 & TVD<0.2) (LSB): {results['lsb_perfect_match_count_tvd_0_2']} ({results['lsb_perfect_match_rate_tvd_0_2']:.2%})\n")
+        f.write(f"  Perfect Match (F1=1.0 & TVD=0) (LSB): {results['lsb_perfect_match_count_tvd_0']} ({results['lsb_perfect_match_rate_tvd_0']:.2%})\n")
+        f.write(f"\n  TOKEN EFFICIENCY (LSB):\n")
+        f.write(f"    MAE<0.005: {results.get('lsb_token_efficiency_mae_0_005', 0.0):.4f}\n")
+        f.write(f"    MAE<0.01:  {results.get('lsb_token_efficiency_mae_0_01', 0.0):.4f}\n")
+        f.write(f"    MAE<0.05:  {results.get('lsb_token_efficiency_mae_0_05', 0.0):.4f}\n")
+        f.write(f"    MAE<0.1:   {results.get('lsb_token_efficiency_mae_0_1', 0.0):.4f}\n")
+        f.write(f"    TVD<0.01:  {results.get('lsb_token_efficiency_tvd_0_01', 0.0):.4f}\n")
+        f.write(f"    TVD<0.05:  {results.get('lsb_token_efficiency_tvd_0_05', 0.0):.4f}\n")
+        f.write(f"    TVD<0.1:   {results.get('lsb_token_efficiency_tvd_0_1', 0.0):.4f}\n")
+        f.write(f"    TVD<0.2:   {results.get('lsb_token_efficiency_tvd_0_2', 0.0):.4f}\n")
+        f.write(f"    TVD=0:     {results.get('lsb_token_efficiency_tvd_0', 0.0):.4f}\n")
     print(f"Summary saved to {summary_file}")
 
 def print_evaluation_results(results: Dict[str, float]):
@@ -1820,6 +2069,38 @@ def print_evaluation_results(results: Dict[str, float]):
                 print(f"      Avg TVD Top-k: {metrics['avg_tvd_topk']:.6f}")
             if 'avg_search_acc' in metrics:
                 print(f"      Avg Search Accuracy: {metrics['avg_search_acc']:.2%}")
+
+    # -------------------------------------------------------------------------
+    print("\n" + "="*60)
+    print("PART 2: LSB MEASUREMENT PROBABILITIES")
+    print("="*60)
+    print(f"  Average Classical Fidelity (LSB): {results['lsb_avg_classical_fidelity']:.6f}")
+    print(f"  Average F1 Score (LSB): {results['lsb_avg_f1_score']:.6f}")
+    print(f"  Average MAE (LSB): {results['lsb_avg_mae']:.6f}")
+    print(f"  Average TVD Top-k (LSB, k=15): {results['lsb_avg_tvd_topk']:.6f}")
+    print(f"  Average Search Accuracy (LSB): {results['lsb_avg_search_accuracy']:.2%}")
+    print(f"  Classical Parse Success Rate (LSB): {results['lsb_classical_parse_success_rate']:.2%}")
+    print(f"  JSON Parse Success Rate (LSB): {results['lsb_json_parse_success_rate']:.2%}")
+    print(f"  Perfect Classical Fidelity (LSB): {results['lsb_perfect_classical_fidelity_count']} ({results['lsb_perfect_classical_fidelity_rate']:.2%})")
+    print(f"  Perfect Match (F1=1.0 & MAE<{MAE_THRESHOLD}) (LSB): {results['lsb_perfect_match_count']} ({results['lsb_perfect_match_rate']:.2%})")
+    print(f"  Perfect Match (F1=1.0 & MAE<0.01) (LSB): {results['lsb_perfect_match_count_mae_0_01']} ({results['lsb_perfect_match_rate_mae_0_01']:.2%})")
+    print(f"  Perfect Match (F1=1.0 & MAE<0.05) (LSB): {results['lsb_perfect_match_count_mae_0_05']} ({results['lsb_perfect_match_rate_mae_0_05']:.2%})")
+    print(f"  Perfect Match (F1=1.0 & MAE<0.1) (LSB): {results['lsb_perfect_match_count_mae_0_1']} ({results['lsb_perfect_match_rate_mae_0_1']:.2%})")
+    print(f"  Perfect Match (F1=1.0 & TVD<0.01) (LSB): {results['lsb_perfect_match_count_tvd_0_01']} ({results['lsb_perfect_match_rate_tvd_0_01']:.2%})")
+    print(f"  Perfect Match (F1=1.0 & TVD<0.05) (LSB): {results['lsb_perfect_match_count_tvd_0_05']} ({results['lsb_perfect_match_rate_tvd_0_05']:.2%})")
+    print(f"  Perfect Match (F1=1.0 & TVD<0.1) (LSB): {results['lsb_perfect_match_count_tvd_0_1']} ({results['lsb_perfect_match_rate_tvd_0_1']:.2%})")
+    print(f"  Perfect Match (F1=1.0 & TVD<0.2) (LSB): {results['lsb_perfect_match_count_tvd_0_2']} ({results['lsb_perfect_match_rate_tvd_0_2']:.2%})")
+    print(f"  Perfect Match (F1=1.0 & TVD=0) (LSB): {results['lsb_perfect_match_count_tvd_0']} ({results['lsb_perfect_match_rate_tvd_0']:.2%})")
+    print(f"\n  TOKEN EFFICIENCY (LSB):")
+    print(f"    MAE<0.005: {results.get('lsb_token_efficiency_mae_0_005', 0.0):.4f}")
+    print(f"    MAE<0.01:  {results.get('lsb_token_efficiency_mae_0_01', 0.0):.4f}")
+    print(f"    MAE<0.05:  {results.get('lsb_token_efficiency_mae_0_05', 0.0):.4f}")
+    print(f"    MAE<0.1:   {results.get('lsb_token_efficiency_mae_0_1', 0.0):.4f}")
+    print(f"    TVD<0.01:  {results.get('lsb_token_efficiency_tvd_0_01', 0.0):.4f}")
+    print(f"    TVD<0.05:  {results.get('lsb_token_efficiency_tvd_0_05', 0.0):.4f}")
+    print(f"    TVD<0.1:   {results.get('lsb_token_efficiency_tvd_0_1', 0.0):.4f}")
+    print(f"    TVD<0.2:   {results.get('lsb_token_efficiency_tvd_0_2', 0.0):.4f}")
+    print(f"    TVD=0:     {results.get('lsb_token_efficiency_tvd_0', 0.0):.4f}")
 
 def main():
     """
