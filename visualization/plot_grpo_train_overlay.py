@@ -77,7 +77,7 @@ def plot_overlay(
 	output_file: Path,
 	max_step: int | None,
 ) -> bool:
-	fig, axes = plt.subplots(len(METRICS_TO_PLOT), 1, figsize=(9, 11))
+	fig, axes = plt.subplots(1, len(METRICS_TO_PLOT), figsize=(16, 4))
 	has_any_data = False
 
 	for ax, (metric_key, metric_label) in zip(axes, METRICS_TO_PLOT):
@@ -147,7 +147,7 @@ def parse_args() -> argparse.Namespace:
 		help="Optional maximum training step to include.")
 	parser.add_argument("--output-dir",  type=Path, default=Path(FIG_DIR))
 	parser.add_argument("--plot-file",   type=str,
-		default="grpo_overlay_non_parameterized_vs_parameterized.png")
+		default="grpo_overlay_non_parameterized_vs_parameterized_horizontal.png")
 	return parser.parse_args()
 
 
