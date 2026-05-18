@@ -12,20 +12,20 @@ source $venv || {
     exit 1
 }
 
-PARAMETRIC_SET_PATH="$data/parametric_sets"
+PARAMETERIZED_SET_PATH="$data/parametric_sets"
 
 # Configuration
 TOTAL_SIZE=22000
 TRAINING_SET_SIZE=20000
 TEST_SET_SIZE=2000
-TEMP_OUTPUT_FILE="$PARAMETRIC_SET_PATH/temp_circuits.jsonl"
-TRAINING_OUTPUT_FILE="$PARAMETRIC_SET_PATH/train.jsonl"
-TEST_OUTPUT_FILE_1="$PARAMETRIC_SET_PATH/test_1.jsonl"
-TEST_OUTPUT_FILE_2="$PARAMETRIC_SET_PATH/test_2.jsonl"
-TEST_OUTPUT_FILE_3="$PARAMETRIC_SET_PATH/test_3.jsonl"
+TEMP_OUTPUT_FILE="$PARAMETERIZED_SET_PATH/temp_circuits.jsonl"
+TRAINING_OUTPUT_FILE="$PARAMETERIZED_SET_PATH/train.jsonl"
+TEST_OUTPUT_FILE_1="$PARAMETERIZED_SET_PATH/test_1.jsonl"
+TEST_OUTPUT_FILE_2="$PARAMETERIZED_SET_PATH/test_2.jsonl"
+TEST_OUTPUT_FILE_3="$PARAMETERIZED_SET_PATH/test_3.jsonl"
 
 # make sure output directory exists
-mkdir -p "$PARAMETRIC_SET_PATH"
+mkdir -p "$PARAMETERIZED_SET_PATH"
 
 # Function to generate and split circuits
 generate_circuits() {
@@ -40,7 +40,7 @@ generate_circuits() {
     echo "Generating: qubits [$min_qubits-$max_qubits], gates [$min_gates-$max_gates] -> $description"
 
     
-    python -m dataset_generator.src.parametric_set \
+    python -m dataset_generator.src.parameterized_set \
         --num_circuits $num_circuits \
         --min_num_qubits $min_qubits \
         --max_num_qubits $max_qubits \
@@ -67,7 +67,7 @@ generate_circuits_test_only() {
     echo "Generating: qubits [$min_qubits-$max_qubits], gates [$min_gates-$max_gates] -> $description"
 
     
-    python -m dataset_generator.src.parametric_set \
+    python -m dataset_generator.src.parameterized_set \
         --num_circuits $num_circuits \
         --min_num_qubits $min_qubits \
         --max_num_qubits $max_qubits \

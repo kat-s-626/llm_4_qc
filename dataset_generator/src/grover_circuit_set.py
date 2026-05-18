@@ -6,7 +6,7 @@ import argparse
 from circuit_runner import run_circuit_statevector
 from python_code_generator import python_code_from_qiskit_circuit
 from nl_generator import natural_language_from_qiskit_circuit
-from dataset_generator.src.parametric_set import _get_circuit_hash
+from dataset_generator.src.parameterized_set import _get_circuit_hash
 from config.constants import (
     GATELIST_TYPE,
     GATELIST_PARAMS,

@@ -268,14 +268,14 @@ class TestNLDesc:
                 for c in state
             ), f"Entry {i}: Invalid characters in quantum state vector in {states}"
 
-    def test_non_parametric_gates_nl_label(self, dataset_path):
+    def test_non_parameterized_gates_nl_label(self, dataset_path):
         """
-        Ensure non-parametric gates are rendered like 'Z gate ...', not 'Z(0) gate ...'
+        Ensure non-parameterized gates are rendered like 'Z gate ...', not 'Z(0) gate ...'
         in step lines containing <quantum_state>.
         """
         data = load_dataset(dataset_path)
 
-        non_parametric_gate_types = {
+        non_parameterized_gate_types = {
              "x", "y", "z", "h", 
         }
 
@@ -292,13 +292,13 @@ class TestNLDesc:
                 gate_type = str(gate.get("type", "")).lower()
                 params = gate.get("params", None)
 
-                is_non_parametric_instance = (params is None) or (isinstance(params, list) and len(params) == 0)
+                is_non_parameterized_instance = (params is None) or (isinstance(params, list) and len(params) == 0)
 
-                if gate_type in non_parametric_gate_types and is_non_parametric_instance:
+                if gate_type in non_parameterized_gate_types and is_non_parameterized_instance:
                     # Reject labels like "Z(0) gate", "H(1) gate", etc. in NL segment.
                     invalid_label_pattern = rf"\b{gate_type.upper()}\s*\([^)]*\)\s+gate\b"
                     assert re.search(invalid_label_pattern, line) is None, (
-                        f"Entry {i}, step {step_idx}: non-parametric gate '{gate_type}' "
+                        f"Entry {i}, step {step_idx}: non-parameterized gate '{gate_type}' "
                         f"should not be parenthesized in NL line: {line}"
                     )
 

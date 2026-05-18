@@ -12,14 +12,14 @@ source $venv || {
     exit 1
 }
 
-logs/non_parametric_set_sftgrop_sft
+logs/non_parameterized_set_sftgrop_sft
 
-mkdir -p "$parsed_logs/non_parametric_set_sftgrpo_sft"
+mkdir -p "$parsed_logs/non_parameterized_set_sftgrpo_sft"
 
 python -m visualization.utils.train_valid_loss_log_parser \
-    --log-dir "$logs/non_parametric_set_sftgrpo_sft" \
-    --output-dir "$parsed_logs/non_parametric_set_sftgrpo_sft" \
+    --log-dir "$logs/non_parameterized_set_sftgrpo_sft" \
+    --output-dir "$parsed_logs/non_parameterized_set_sftgrpo_sft" \
 
 python -m visualization.plot_sft_train \
-    --csv-path "$parsed_logs/non_parametric_set_sftgrpo_sft/train_valid_loss_aggregated.csv" \
-    --output-dir "$figs/non_parametric_set_sftgrpo_sft" \
+    --csv-path "$parsed_logs/non_parameterized_set_sftgrpo_sft/train_valid_loss_aggregated.csv" \
+    --output-dir "$figs/non_parameterized_set_sftgrpo_sft" \

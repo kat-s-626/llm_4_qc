@@ -161,8 +161,8 @@ def plot_comparison(
 
 def parse_args() -> argparse.Namespace:
 	default_parsed_logs = Path(__file__).resolve().parent / "parsed_logs"
-	default_run_a_csv = default_parsed_logs / "parametric_set_sftgrpo" / "grpo_metrics_aggregated.csv"
-	default_run_b_csv = default_parsed_logs / "parametric_set_sftgrpo_05" / "grpo_metrics_aggregated.csv"
+	default_run_a_csv = default_parsed_logs / "parameterized_set_sftgrpo" / "grpo_metrics_aggregated.csv"
+	default_run_b_csv = default_parsed_logs / "parameterized_set_sftgrpo_05" / "grpo_metrics_aggregated.csv"
 
 	parser = argparse.ArgumentParser(
 		description=(

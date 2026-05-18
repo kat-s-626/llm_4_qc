@@ -66,7 +66,7 @@ def filter_missing_hashes(train_path: Path, known_hashes: set[str], output_path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Filter train_updated.jsonl rows whose circuit hash does not exist in combined_non_parametric_sets.jsonl"
+        description="Filter train_updated.jsonl rows whose circuit hash does not exist in combined_non_parameterized_sets.jsonl"
     )
     parser.add_argument(
         "--train",

@@ -185,7 +185,7 @@ def generate_random_circuit(num_qubits, max_num_gates):
 
     return circuit, gates_list, circuit_hash, measurement_probabilities
 
-def generate_parametric_set(num_circuits, min_num_qubits, max_num_qubits, min_num_gates, max_num_gates, output_file=None):
+def generate_parameterized_set(num_circuits, min_num_qubits, max_num_qubits, min_num_gates, max_num_gates, output_file=None):
     with open(output_file, "w") as f:
         circuit_hashes = set()
         num_generated = 0
@@ -220,7 +220,7 @@ def generate_parametric_set(num_circuits, min_num_qubits, max_num_qubits, min_nu
             pbar.update(1)
             
         
-    print(f"Generated {num_generated} unique parametric circuits and saved to {output_file}.")
+    print(f"Generated {num_generated} unique parameterized circuits and saved to {output_file}.")
 
 def main():
     parser = argparse.ArgumentParser(description="Generate random quantum circuits and save to JSONL.")
@@ -229,13 +229,13 @@ def main():
     parser.add_argument("--max_num_qubits", type=int, default=5, help="Maximum number of qubits in the circuits.")
     parser.add_argument("--min_num_gates", type=int, default=5, help="Minimum number of gates in the circuits.")
     parser.add_argument("--max_num_gates", type=int, default=20, help="Maximum number of gates in the circuits.")
-    parser.add_argument("--output_file", type=str, default="parametric_set.jsonl", help="Output JSONL file to save the generated circuits.")
+    parser.add_argument("--output_file", type=str, default="parameterized_set.jsonl", help="Output JSONL file to save the generated circuits.")
     parser.add_argument("--random_seed", type=int, default=42, help="Random seed for reproducibility.")
     args = parser.parse_args()
 
     random.seed(args.random_seed)
 
-    generate_parametric_set(
+    generate_parameterized_set(
         num_circuits=args.num_circuits,
         min_num_qubits=args.min_num_qubits,
         max_num_qubits=args.max_num_qubits,
