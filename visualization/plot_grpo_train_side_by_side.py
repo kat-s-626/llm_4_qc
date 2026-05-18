@@ -134,10 +134,7 @@ def plot_side_by_side(
 		left_axis.set_title(run_a_label, fontsize=11)
 		right_axis.set_title(run_b_label, fontsize=11)
 
-		if run_a_has:
-			left_axis.legend(loc="best", framealpha=0.9)
-		if run_b_has:
-			right_axis.legend(loc="best", framealpha=0.9)
+
 
 	axes[-1, 0].set_xlabel("Training Step", fontsize=12)
 	axes[-1, 1].set_xlabel("Training Step", fontsize=12)
@@ -162,17 +159,17 @@ def parse_args() -> argparse.Namespace:
 	parser.add_argument(
 		"--left-csv",
 		type=Path,
-		default=default_parsed_logs / "non_parameterized_set_sftgrpo" / "grpo_metrics_aggregated.csv",
-		help="CSV for left plot column (default: non_parameterized_set_sftgrpo).",
+		default=default_parsed_logs / "groverset_sftgrpo" / "grpo_metrics_aggregated.csv",
+		help="CSV for left plot column (default: groverset_sftgrpo).",
 	)
 	parser.add_argument(
 		"--right-csv",
 		type=Path,
-		default=default_parsed_logs / "parameterized_set_sftgrpo_05" / "grpo_metrics_aggregated.csv",
-		help="CSV for right plot column (default: parameterized_set_sftgrpo_05).",
+		default=default_parsed_logs / "randomset_sftgrpo_05" / "grpo_metrics_aggregated.csv",
+		help="CSV for right plot column (default: randomset_sftgrpo_05).",
 	)
-	parser.add_argument("--left-label", type=str, default="non_parameterized_set_sftgrpo", help="Legend/title label for left column.")
-	parser.add_argument("--right-label", type=str, default="parameterized_set_sftgrpo_05", help="Legend/title label for right column.")
+	parser.add_argument("--left-label", type=str, default="Non-Parameterized Set", help="Legend/title label for left column.")
+	parser.add_argument("--right-label", type=str, default="Parameterized Set", help="Legend/title label for right column.")
 	parser.add_argument(
 		"--max-step",
 		type=int,
@@ -188,7 +185,7 @@ def parse_args() -> argparse.Namespace:
 	parser.add_argument(
 		"--plot-file",
 		type=str,
-		default="grpo_side_by_side_non_parameterized_set_vs_parameterized_set_05.png",
+		default="grpo_side_by_side_non_parameterized_vs_parameterized.png",
 		help="Filename for side-by-side comparison figure.",
 	)
 	return parser.parse_args()
