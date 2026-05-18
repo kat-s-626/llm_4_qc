@@ -111,10 +111,17 @@ def plot_overlay(
 		ax.grid(True, which="major", linestyle="-", alpha=0.15)
 		clean_spines(ax)
 
-		if left_has or right_has:
-			ax.legend(loc="best", framealpha=0.9, fontsize=10)
-
 	if has_any_data:
+		# Single shared legend centred below all subplots
+		handles, labels = axes[0].get_legend_handles_labels()
+		fig.legend(
+			handles, labels,
+			loc="lower center",
+			ncol=2,
+			fontsize=11,
+			framealpha=0.9,
+			bbox_to_anchor=(0.5, -0.08),
+		)
 		fig.tight_layout()
 		fig.savefig(output_file, dpi=300, bbox_inches="tight")
 
