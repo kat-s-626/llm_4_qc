@@ -222,7 +222,6 @@ def plot_barchart(
         loc="center",
         fontsize=10,
         framealpha=0.9,
-        title="Model",
         title_fontsize=10,
         borderpad=1.0,
         labelspacing=0.8,
