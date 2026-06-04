@@ -403,7 +403,7 @@ def plot_token_limit_chart(
         ax.set_title(panel_title, fontsize=12, pad=10)
         ax.set_xticks(x)
         ax.set_xticklabels(split_labels, fontsize=9)
-        ax.set_xlabel("Set", fontsize=10)
+        ax.set_xlabel("Evaluation Set", fontsize=10)
         ax.set_ylabel("Samples Exceeding Token Limit (%)" if show_ylabel else "", fontsize=10)
         ax.grid(True, axis="y", which="major", linestyle="--", alpha=0.15, zorder=0)
         ax.set_ylim(0, y_top)
