@@ -72,7 +72,7 @@ def _generate_grover_circuit(marked_states, num_qubits):
     return circuit, circuit_data
 
 def _circuit_generation_helper(num_qubits, marked_states):
-    optimal_num_iterations = math.floor(math.pi / 4 * math.asin(math.sqrt(len(marked_states) / (2 ** num_qubits))))
+    optimal_num_iterations = math.floor(math.pi / (4 * math.asin(math.sqrt(len(marked_states) / (2 ** num_qubits)))))
     
     circuit = QuantumCircuit(num_qubits)
     gates_list = []

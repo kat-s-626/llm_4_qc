@@ -26,16 +26,22 @@ def run_circuit_statevector(circuit, significant_digits=4, top_n=30):
     circuit_to_run.remove_final_measurements()
     circuit_to_run.save_statevector()
 
-    if torch.cuda.is_available():
-        try:
-            simulator = AerSimulator(method="statevector", device="GPU")
-        except Exception:
-            simulator = AerSimulator(method="statevector", device="CPU")
-    else:
-        simulator = AerSimulator(method="statevector", device="CPU")
+    def _make_simulator(device: str) -> AerSimulator:
+        return AerSimulator(method="statevector", device=device)
 
-    tqc = transpile(circuit_to_run, simulator)
-    result = simulator.run(tqc).result()
+    tqc = None
+    result = None
+    for device in (["GPU", "CPU"] if torch.cuda.is_available() else ["CPU"]):
+        try:
+            simulator = _make_simulator(device)
+            tqc = transpile(circuit_to_run, simulator)
+            result = simulator.run(tqc).result()
+            break
+        except (RuntimeError, Exception):
+            if device == "CPU":
+                raise
+            # GPU failed – fall through to CPU
+            continue
     state = result.get_statevector(circuit_to_run)
     probs = Statevector(state).probabilities_dict()
 

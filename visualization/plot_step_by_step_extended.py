@@ -23,7 +23,12 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 from config.paths import FIG_DIR
-from visualization.constants import apply_plot_style, REFERENCE_LINE_STYLE, STEP_FIDELITY_STYLES
+from visualization.constants import (
+    apply_plot_style,
+    REFERENCE_LINE_STYLE,
+    STEP_FIDELITY_STYLES,
+    STEPWISE_PLOT_CONFIG,
+)
 
 apply_plot_style()
 
@@ -121,12 +126,15 @@ def plot_extended(
             ax.plot(steps, fidelities, label=sty["label"],
                     color=sty["color"], linewidth=sty["linewidth"])
         else:
-            ax.plot(steps, fidelities, label=key, linewidth=1.8)
+            ax.plot(steps, fidelities, label=key,
+                    linewidth=STEPWISE_PLOT_CONFIG["linewidth_default"])
         has_data = True
 
     if not has_data:
         plt.close(fig)
         return False
+
+    cfg = STEPWISE_PLOT_CONFIG
 
     # ── extrapolation boundary ────────────────────────────────────────────────
     ax.axvline(
@@ -137,7 +145,7 @@ def plot_extended(
         alpha=0.85,
         zorder=2,
     )
-    y_top = 1.02
+    y_top = cfg["ylim"][1] * 0.999
     ax.text(
         boundary - 0.8, y_top, "In-distribution",
         ha="right", va="top", fontsize=9, color="#475569",
@@ -154,21 +162,23 @@ def plot_extended(
     ax.axvspan(boundary, x_max, alpha=0.04, color="#f97316", zorder=0)
 
     # ── reference lines ───────────────────────────────────────────────────────
-    for threshold, label in [(0.99, "99%"), (0.95, "95%"), (0.90, "90%")]:
+    for threshold, ref_label in cfg["reference_lines"]:
         ax.axhline(threshold, **REFERENCE_LINE_STYLE)
-        ax.text(x_max, threshold, f" {label}", va="center",
-                fontsize=9, color=REFERENCE_LINE_STYLE["color"])
+        ax.text(x_max, threshold, f" {ref_label}", va="center",
+                fontsize=cfg["reference_label_fontsize"],
+                color=REFERENCE_LINE_STYLE["color"])
 
-    ax.set_xlabel("Number of Gates", fontsize=13)
-    ax.set_ylabel("Quantum State Fidelity", fontsize=13)
-    ax.set_ylim(0, 1.08)
+    ax.set_xlabel(cfg["xlabel"], fontsize=cfg["xlabel_fontsize"])
+    ax.set_ylabel(cfg["ylabel"], fontsize=cfg["ylabel_fontsize"])
+    ax.set_ylim(*cfg["ylim"])
     ax.set_xlim(left=0, right=x_max)
     ax.xaxis.set_major_locator(ticker.MultipleLocator(10))
     ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
-    ax.yaxis.set_major_locator(ticker.MultipleLocator(0.2))
-    ax.yaxis.set_minor_locator(ticker.MultipleLocator(0.1))
-    ax.grid(True, which="major", linestyle="-", alpha=0.15)
-    ax.legend(loc="lower left", fontsize=10, framealpha=0.9)
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(cfg["y_major_tick"]))
+    ax.yaxis.set_minor_locator(ticker.MultipleLocator(cfg["y_minor_tick"]))
+    ax.grid(True, which="major", linestyle="-", alpha=cfg["grid_alpha"])
+    ax.legend(loc=cfg["legend_loc"], fontsize=cfg["legend_fontsize"],
+              framealpha=cfg["legend_framealpha"])
 
     plt.tight_layout()
     fig.savefig(save_path, dpi=300, bbox_inches="tight")

@@ -25,6 +25,9 @@ from config.constants import (
     DATASET_NL_DESCRIPTION,
     DATASET_EXTRA_INFO,
     EXTRA_INFO_MARKED_STATES,
+    EXTRA_INFO_OPTIMAL_ITERATIONS,
+    EXTRA_INFO_NUM_ITERATIONS,
+    EXTRA_INFO_ITERATIONS_OFFSET,
 )
 
 # Grover circuit (high level):
@@ -48,9 +51,17 @@ def _load_sampled_marked_states(filename):
             return json.load(f)
     return None
 
-def _generate_grover_circuit(marked_states, num_qubits, multi_controlled_z=False):
+def _generate_grover_circuit(marked_states, num_qubits, multi_controlled_z=False, iterations_offset=0):
     marked_states = list(marked_states)
-    circuit, gates_list = _circuit_generation_helper(num_qubits, marked_states, multi_controlled_z=multi_controlled_z)
+    optimal = max(1, math.floor(math.pi / (4 * math.asin(math.sqrt(len(marked_states) / (2 ** num_qubits))))))
+    num_iterations = optimal + iterations_offset
+    if num_iterations < 1:
+        return None, None  # caller should skip
+    circuit, gates_list = _circuit_generation_helper(
+        num_qubits, marked_states,
+        multi_controlled_z=multi_controlled_z,
+        num_iterations=num_iterations,
+    )
     lsb_measurement_probabilities = run_circuit_statevector(circuit)
     msb_measurement_probabilities = {key[::-1]: value for key, value in lsb_measurement_probabilities.items()}
     python_code = python_code_from_qiskit_circuit(num_qubits, gates_list)
@@ -66,14 +77,18 @@ def _generate_grover_circuit(marked_states, num_qubits, multi_controlled_z=False
             DATASET_PYTHON_CODE: python_code,
             DATASET_NL_DESCRIPTION: natural_language,
             DATASET_EXTRA_INFO: {
-                EXTRA_INFO_MARKED_STATES: marked_states
+                EXTRA_INFO_MARKED_STATES: marked_states,
+                EXTRA_INFO_OPTIMAL_ITERATIONS: optimal,
+                EXTRA_INFO_NUM_ITERATIONS: num_iterations,
+                EXTRA_INFO_ITERATIONS_OFFSET: iterations_offset,
             }
         }  
     
     return circuit, circuit_data
 
-def _circuit_generation_helper(num_qubits, marked_states, multi_controlled_z=False):
-    optimal_num_iterations = max(1, math.floor(math.pi / 4 * math.asin(math.sqrt(len(marked_states) / (2 ** num_qubits)))))
+def _circuit_generation_helper(num_qubits, marked_states, multi_controlled_z=False, num_iterations=None):
+    if num_iterations is None:
+        num_iterations = max(1, math.floor(math.pi / (4 * math.asin(math.sqrt(len(marked_states) / (2 ** num_qubits))))))
     
     circuit = QuantumCircuit(num_qubits)
     gates_list = []
@@ -83,7 +98,7 @@ def _circuit_generation_helper(num_qubits, marked_states, multi_controlled_z=Fal
     for qubit in range(num_qubits):
         gates_list.append(_build_gate_entry("h", [], [qubit]))
     
-    for _ in range(optimal_num_iterations):
+    for _ in range(num_iterations):
         # Step 2: Apply oracle
         oracle_circuit, oracle_gates = _grover_oracle(marked_states, multi_controlled_z=multi_controlled_z)
         circuit.compose(oracle_circuit, inplace=True)
@@ -253,6 +268,7 @@ def main():
     parser.add_argument("--max_marked_states", type=int, default=3, help="Maximum number of marked states in the generated circuits.")
     parser.add_argument("--num_samples_per_qubits", type=int, default=10, help="Number of unique combinations of marked states to sample for each qubit count.")
     parser.add_argument("--multi_controlled_z", action="store_true", help="Whether to use multi-controlled Z gates directly in the oracle and diffuser, instead of converting to multi-controlled X gates with Hadamard transformations.")
+    parser.add_argument("--iterations_offset", type=int, default=0, help="Offset added to optimal Grover iterations. 0 = optimal, +1 = over-rotated, -1 = under-rotated. Circuits where optimal+offset < 1 are skipped.")
     parser.add_argument("--marked_states_file", type=str, default="sampled_marked_states.json", help="Path to the file containing sampled marked states.")
     parser.add_argument("--output_file", type=str, default="sampled_grover_circuits.json", help="Path to save the generated circuit data.")
     
@@ -263,10 +279,21 @@ def main():
         raise FileNotFoundError(f"Marked states file not found: {args.marked_states_file}")
     
     all_circuit_data = []
+    skipped = 0
     for marked_states in sampled_marked_states:
         num_qubits = len(marked_states[0])
-        circuit, circuit_data = _generate_grover_circuit(marked_states, num_qubits, multi_controlled_z=args.multi_controlled_z)
+        circuit, circuit_data = _generate_grover_circuit(
+            marked_states, num_qubits,
+            multi_controlled_z=args.multi_controlled_z,
+            iterations_offset=args.iterations_offset,
+        )
+        if circuit_data is None:
+            skipped += 1
+            continue
         all_circuit_data.append(circuit_data)
+
+    if skipped:
+        print(f"Skipped {skipped} circuits (optimal + offset < 1)")
 
     output_dir = os.path.dirname(args.output_file)
     if output_dir:

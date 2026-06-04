@@ -32,6 +32,7 @@ export gptoss_120b="$project_root/verl/gpt-oss-120b"
 
 export grpo_non_parameterized_stage_1_97="$project_root/verl/merged_models/grpo_qwen3_non_parametric_set_stage_1_97"
 export grpo_non_parameterized_stage_1_194="$project_root/verl/merged_models/grpo_qwen3_non_parametric_set_stage_1_194"
+export groverset_sft_model="/scratch3/ip004/rl_experiment/verl/merged_models/groverset_sft_17500/qwen3_8b_special"
 
 # dir names
 export qwen_8b_special_dir="qwen3_8b_special"

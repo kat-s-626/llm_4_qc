@@ -215,3 +215,5 @@ data/
 logs/
 parsed_logs/
 checklists/
+sample_*
+sbatch_*.sh

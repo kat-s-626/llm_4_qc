@@ -44,6 +44,9 @@ EXTRA_INFO_SPLIT = "split"
 EXTRA_INFO_INDEX = "index"
 EXTRA_INFO_NUM_GATES = "num_gates"
 EXTRA_INFO_MARKED_STATES = "marked_states"
+EXTRA_INFO_OPTIMAL_ITERATIONS = "optimal_iterations"
+EXTRA_INFO_NUM_ITERATIONS = "num_iterations"
+EXTRA_INFO_ITERATIONS_OFFSET = "iterations_offset"
 
 SYMBOLIC_PARAMS_TO_STR = {
     # Positive phases

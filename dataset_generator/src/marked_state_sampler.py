@@ -1,5 +1,6 @@
 import random
 from itertools import combinations
+from math import comb
 import argparse
 import os
 import json
@@ -58,7 +59,8 @@ def sample_marked_states(
             if num_marked_states > max_possible_marked_states:
                 break
 
-            max_sampled_per_qubits = min(num_samples_per_qubits, max_possible_marked_states)
+            num_combos = comb(2 ** num_qubits, num_marked_states)
+            max_sampled_per_qubits = min(num_samples_per_qubits, num_combos)
             if num_qubits < 7 and num_marked_states < 5:
                 # For instances in smaller scale, include all possible combinations of marked states to ensure diversity
                 all_bitstrings = _get_all_bitstrings(num_qubits)
@@ -69,18 +71,20 @@ def sample_marked_states(
                 for combination in sampled_combinations:
                     sampled_marked_states.add(tuple(sorted(combination)))
             else:
-                sampled_marked_states = set()
+                all_bitstrings = _get_all_bitstrings(num_qubits)
+                local_sampled: set = set()
                 attempts = 0
-                while attempts < max_attempts and len(sampled_marked_states) < max_sampled_per_qubits:
-                    marked_states = tuple(sorted(_random_bitstring(num_qubits) for _ in range(num_marked_states)))
+                while attempts < max_attempts and len(local_sampled) < max_sampled_per_qubits:
+                    marked_states = tuple(sorted(random.sample(all_bitstrings, num_marked_states)))
 
-                    prev_sampled_count = len(sampled_marked_states)
-                    sampled_marked_states.add(marked_states)
+                    prev_sampled_count = len(local_sampled)
+                    local_sampled.add(marked_states)
 
-                    if len(sampled_marked_states) > prev_sampled_count:
+                    if len(local_sampled) > prev_sampled_count:
                         attempts = 0
                     else:
                         attempts += 1
+                sampled_marked_states.update(local_sampled)
 
     # Transform to list of lists for JSON serialization
     sampled_marked_states = [list(combination) for combination in sampled_marked_states]

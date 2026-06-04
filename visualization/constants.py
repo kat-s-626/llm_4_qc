@@ -61,6 +61,26 @@ REFERENCE_LINE_STYLE = {
     "alpha": 0.7,
 }
 
+# ── Shared config for all step-wise fidelity plots ────────────────────────────
+# Edit here to change the look of both plot_step_by_step.py and
+# plot_step_by_step_extended.py simultaneously.
+STEPWISE_PLOT_CONFIG = {
+    "ylim": (0.8, 1.1),
+    "y_major_tick": 0.2,
+    "y_minor_tick": 0.1,
+    "xlabel": "Number of Gates",
+    "ylabel": "Quantum State Fidelity",
+    "xlabel_fontsize": 13,
+    "ylabel_fontsize": 13,
+    "grid_alpha": 0.15,
+    "legend_loc": "lower left",
+    "legend_fontsize": 10,
+    "legend_framealpha": 0.9,
+    "reference_lines": [(0.99, "99%"), (0.95, "95%"), (0.90, "90%")],
+    "reference_label_fontsize": 9,
+    "linewidth_default": 1.8,
+}
+
 LOG_METRIC_FIELDS = (
     "step",
     "global_seqlen/min",
