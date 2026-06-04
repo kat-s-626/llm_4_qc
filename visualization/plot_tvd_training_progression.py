@@ -129,7 +129,7 @@ def _bar_panel(
     ax.set_title(title, fontsize=12, pad=10)
     ax.set_xticks(x)
     ax.set_xticklabels(split_labels, fontsize=9)
-    ax.set_xlabel("Test Split", fontsize=10)
+    ax.set_xlabel("Set", fontsize=10)
     if show_ylabel:
         ax.set_ylabel("Average TVD", fontsize=10)
     ax.set_ylim(0, 1.1)
@@ -403,6 +403,7 @@ def plot_token_limit_chart(
         ax.set_title(panel_title, fontsize=12, pad=10)
         ax.set_xticks(x)
         ax.set_xticklabels(split_labels, fontsize=9)
+        ax.set_xlabel("Set", fontsize=10)
         ax.set_ylabel("Samples Exceeding Token Limit (%)" if show_ylabel else "", fontsize=10)
         ax.grid(True, axis="y", which="major", linestyle="--", alpha=0.15, zorder=0)
         ax.set_ylim(0, y_top)
@@ -416,7 +417,6 @@ def plot_token_limit_chart(
         bbox_to_anchor=(0.755, 0.5),
         fontsize=9,
         framealpha=0.9,
-        title="Training Stage",
         title_fontsize=9,
         borderpad=1.0,
         labelspacing=0.8,
