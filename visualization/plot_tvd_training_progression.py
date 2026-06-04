@@ -32,7 +32,7 @@ _PARAM_DIRS = {
 }
 
 _TEST_SPLITS = ["test_1", "test_2", "test_3"]
-_SPLIT_LABELS = ["Test 1", "Test 2", "Test 3"]
+_SPLIT_LABELS = ["Set 1", "Set 2", "Set 3"]
 
 # ── colours ───────────────────────────────────────────────────────────────────
 # Stage colours (for grouped bar chart – one colour per stage)
@@ -141,7 +141,6 @@ def _bar_panel(
             loc="upper right",
             fontsize=8.5,
             framealpha=0.9,
-            title="Training Stage",
             title_fontsize=8.5,
             borderpad=0.8,
             labelspacing=0.6,
@@ -282,7 +281,6 @@ def plot_line_chart(
         bbox_to_anchor=(1.0, 0.5),
         fontsize=9,
         framealpha=0.9,
-        title="Test Split",
         title_fontsize=9,
         borderpad=1.0,
         labelspacing=0.8,
