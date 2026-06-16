@@ -1,15 +1,15 @@
 """Plot GRPO training metrics for two runs overlaid on the same axes.
 
 Produces a single figure with 3 subplots (one per metric), each showing both
-the non-parameterized and parameterized sets together for easy comparison.
+the non-parameterised and parameterised sets together for easy comparison.
 
 Usage
 -----
 python -m visualization.plot_grpo_train_overlay \
     [--left-csv  path/to/non_param.csv] \
     [--right-csv path/to/param.csv] \
-    [--left-label  "Non-Parameterized Set"] \
-    [--right-label "Parameterized Set"] \
+    [--left-label  "Non-Parameterised Set"] \
+    [--right-label "Parameterised Set"] \
     [--max-step 1000] \
     [--output-dir visualization/figures] \
     [--plot-file grpo_overlay.png]
@@ -106,8 +106,8 @@ def plot_overlay(
 				label=right_label,
 			)
 
-		ax.set_ylabel(metric_label, fontsize=11)
-		ax.set_xlabel("Training Step", fontsize=11)
+		ax.set_ylabel(metric_label, fontsize=12)
+		ax.set_xlabel("Training Step", fontsize=12)
 		ax.grid(True, which="major", linestyle="-", alpha=0.15)
 		clean_spines(ax)
 
@@ -118,7 +118,7 @@ def plot_overlay(
 			handles, labels,
 			loc="lower center",
 			ncol=2,
-			fontsize=11,
+			fontsize=12,
 			framealpha=0.9,
 			bbox_to_anchor=(0.5, -0.08),
 		)
@@ -141,20 +141,20 @@ def parse_args() -> argparse.Namespace:
 	parser.add_argument(
 		"--left-csv", type=Path,
 		default=default_parsed_logs / "groverset_sftgrpo" / "grpo_metrics_aggregated.csv",
-		help="CSV for the non-parameterized set.",
+		help="CSV for the non-parameterised set.",
 	)
 	parser.add_argument(
 		"--right-csv", type=Path,
 		default=default_parsed_logs / "randomset_sftgrpo_05" / "grpo_metrics_aggregated.csv",
-		help="CSV for the parameterized set.",
+		help="CSV for the parameterised set.",
 	)
-	parser.add_argument("--left-label",  type=str, default="Non-Parameterized Set")
-	parser.add_argument("--right-label", type=str, default="Parameterized Set")
+	parser.add_argument("--left-label",  type=str, default="Non-Parameterised Set")
+	parser.add_argument("--right-label", type=str, default="Parameterised Set")
 	parser.add_argument("--max-step", type=int, default=None,
 		help="Optional maximum training step to include.")
 	parser.add_argument("--output-dir",  type=Path, default=Path(FIG_DIR))
 	parser.add_argument("--plot-file",   type=str,
-		default="grpo_overlay_non_parameterized_vs_parameterized_horizontal.png")
+		default="grpo_overlay_non_parameterised_vs_parameterised_horizontal.png")
 	return parser.parse_args()
 
 

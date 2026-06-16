@@ -17,14 +17,14 @@ apply_plot_style()
 # ── data paths ────────────────────────────────────────────────────────────────
 _BASE = Path("/scratch3/ip004/data/results/eval")
 
-# Non-parameterized (Grover) set
+# Non-parameterised (Grover) set
 _NON_PARAM_DIRS = {
     "Baseline\n(Qwen3-8B)": _BASE / "grover_sets/baseline/baseline_qwen3_8b",
     "SFT + GRPO\nStage 1":  _BASE / "grover_sets/sft_grpo",
     "SFT + GRPO\nStage 2":  _BASE / "grover_sets/sft_grpo/sft_grpo_grover_grpo_641",
 }
 
-# Parameterized (Random) set
+# Parameterised (Random) set
 _PARAM_DIRS = {
     "Baseline\n(Qwen3-8B)": _BASE / "random_sets/baseline/qwen3_8b",
     "SFT + GRPO\nStage 1":  _BASE / "random_sets/sft_grpo",
@@ -126,12 +126,12 @@ def _bar_panel(
                     fontweight="bold",
                 )
 
-    ax.set_title(title, fontsize=12, pad=10)
+    ax.set_title(title, fontsize=14, pad=10)
     ax.set_xticks(x)
-    ax.set_xticklabels(split_labels, fontsize=9)
-    ax.set_xlabel("Set", fontsize=10)
+    ax.set_xticklabels(split_labels, fontsize=11)
+    ax.set_xlabel("Set", fontsize=12)
     if show_ylabel:
-        ax.set_ylabel("Average TVD", fontsize=10)
+        ax.set_ylabel("Average TVD", fontsize=12)
     ax.set_ylim(0, 1.1)
     ax.yaxis.set_major_locator(ticker.MultipleLocator(0.2))
     ax.yaxis.set_minor_locator(ticker.MultipleLocator(0.1))
@@ -139,9 +139,9 @@ def _bar_panel(
     if show_legend:
         ax.legend(
             loc="upper right",
-            fontsize=8.5,
+            fontsize=10.5,
             framealpha=0.9,
-            title_fontsize=8.5,
+            title_fontsize=10.5,
             borderpad=0.8,
             labelspacing=0.6,
         )
@@ -158,7 +158,7 @@ def plot_bar_chart(
         axes[0],
         non_param_data,
         _SPLIT_LABELS,
-        title="Non-parameterized Set",
+        title="Non-parameterised Set",
         show_legend=True,
         show_ylabel=True,
     )
@@ -166,7 +166,7 @@ def plot_bar_chart(
         axes[1],
         param_data,
         _SPLIT_LABELS,
-        title="Parameterized Set",
+        title="Parameterised Set",
         show_legend=False,
         show_ylabel=False,
     )
@@ -245,12 +245,12 @@ def _line_panel(
                 fontsize=7.5, color=color, fontweight="bold",
             )
 
-    ax.set_title(title, fontsize=12, pad=10)
+    ax.set_title(title, fontsize=14, pad=10)
     ax.set_xticks(x)
-    ax.set_xticklabels(stage_ticks, fontsize=9)
-    ax.set_xlabel("Training Stage", fontsize=10)
+    ax.set_xticklabels(stage_ticks, fontsize=11)
+    ax.set_xlabel("Training Stage", fontsize=12)
     if show_ylabel:
-        ax.set_ylabel("Average TVD", fontsize=10)
+        ax.set_ylabel("Average TVD", fontsize=12)
     ax.set_ylim(0, 1.15)
     ax.yaxis.set_major_locator(ticker.MultipleLocator(0.2))
     ax.yaxis.set_minor_locator(ticker.MultipleLocator(0.1))
@@ -270,18 +270,18 @@ def plot_line_chart(
     fig, axes = plt.subplots(1, 2, figsize=(14, 5.5), sharey=True)
 
     _line_panel(axes[0], non_param_data, _SPLIT_LABELS,
-                title="Non-parameterized Set", show_ylabel=True)
+                title="Non-parameterised Set", show_ylabel=True)
     _line_panel(axes[1], param_data,     _SPLIT_LABELS,
-                title="Parameterized Set",    show_ylabel=False)
+                title="Parameterised Set",    show_ylabel=False)
 
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(
         handles, labels,
         loc="center left",
         bbox_to_anchor=(1.0, 0.5),
-        fontsize=9,
+        fontsize=11,
         framealpha=0.9,
-        title_fontsize=9,
+        title_fontsize=11,
         borderpad=1.0,
         labelspacing=0.8,
     )
@@ -301,14 +301,14 @@ def plot_line_chart(
 
 _TOKEN_LIMIT = 32_768
 
-# CSVs for the parameterized (random) set – same ordering as _PARAM_DIRS
+# CSVs for the parameterised (random) set – same ordering as _PARAM_DIRS
 _PARAM_CSV_DIRS = {
     "Baseline\n(Qwen3-8B)": _BASE / "random_sets/baseline/qwen3_8b",
     "SFT + GRPO\nStage 1":  _BASE / "random_sets/sft_grpo",
     "SFT + GRPO\nStage 2":  _BASE / "random_sets/sft_grpo/sft_grpo_random_grpo_1152",
 }
 
-# CSVs for the non-parameterized (Grover) set – same ordering as _NON_PARAM_DIRS
+# CSVs for the non-parameterised (Grover) set – same ordering as _NON_PARAM_DIRS
 _NON_PARAM_CSV_DIRS = {
     "Baseline\n(Qwen3-8B)": _BASE / "grover_sets/baseline/baseline_qwen3_8b",
     "SFT + GRPO\nStage 1":  _BASE / "grover_sets/sft_grpo",
@@ -370,8 +370,8 @@ def plot_token_limit_chart(
 
 
     panel_specs = [
-        (axes[0], np_token_data,    "Non-parameterized Set", True),
-        (axes[1], param_token_data, "Parameterized Set",     False),
+        (axes[0], np_token_data,    "Non-parameterised Set", True),
+        (axes[1], param_token_data, "Parameterised Set",     False),
     ]
 
     for ax, token_data, panel_title, show_ylabel in panel_specs:
@@ -400,11 +400,11 @@ def plot_token_limit_chart(
                     fontweight="bold",
                 )
 
-        ax.set_title(panel_title, fontsize=12, pad=10)
+        ax.set_title(panel_title, fontsize=14, pad=10)
         ax.set_xticks(x)
-        ax.set_xticklabels(split_labels, fontsize=9)
-        ax.set_xlabel("Evaluation Set", fontsize=10)
-        ax.set_ylabel("Samples Exceeding Token Limit (%)" if show_ylabel else "", fontsize=10)
+        ax.set_xticklabels(split_labels, fontsize=11)
+        ax.set_xlabel("Evaluation Set", fontsize=12)
+        ax.set_ylabel("Samples Exceeding Token Limit (%)" if show_ylabel else "", fontsize=12)
         ax.grid(True, axis="y", which="major", linestyle="--", alpha=0.15, zorder=0)
         ax.set_ylim(0, y_top)
         ax.yaxis.set_major_formatter(ticker.PercentFormatter(decimals=0))
@@ -415,9 +415,9 @@ def plot_token_limit_chart(
         handles, labels,
         loc="center left",
         bbox_to_anchor=(0.755, 0.5),
-        fontsize=9,
+        fontsize=11,
         framealpha=0.9,
-        title_fontsize=9,
+        title_fontsize=11,
         borderpad=1.0,
         labelspacing=0.8,
     )
@@ -448,12 +448,12 @@ if __name__ == "__main__":
     param_data     = _load_data(_PARAM_DIRS,     _TEST_SPLITS)
 
     # Print loaded data for inspection
-    print("\n── Non-parameterized (Grover) TVD values ──")
+    print("\n── Non-parameterised (Grover) TVD values ──")
     for stage, vals in non_param_data.items():
         label = stage.replace("\n", " ")
         print(f"  {label}: {[f'{v:.4f}' if v is not None else 'N/A' for v in vals]}")
 
-    print("\n── Parameterized (Random) TVD values ──")
+    print("\n── Parameterised (Random) TVD values ──")
     for stage, vals in param_data.items():
         label = stage.replace("\n", " ")
         print(f"  {label}: {[f'{v:.4f}' if v is not None else 'N/A' for v in vals]}")
@@ -465,13 +465,13 @@ if __name__ == "__main__":
     token_data_param = _load_token_exceedance(_PARAM_CSV_DIRS, _TEST_SPLITS)
     token_data_np    = _load_token_exceedance(_NON_PARAM_CSV_DIRS, _TEST_SPLITS)
 
-    print("\n── Token-limit exceedances (parameterized set, limit=32768) ──")
+    print("\n── Token-limit exceedances (parameterised set, limit=32768) ──")
     for stage, split_vals in token_data_param.items():
         label = stage.replace("\n", " ")
         print(f"  {label}: " + ", ".join(
             f"{s}: {c} ({p:.1f}%)" for s, (c, p) in split_vals.items()
         ))
-    print("\n── Token-limit exceedances (non-parameterized set, limit=32768) ──")
+    print("\n── Token-limit exceedances (non-parameterised set, limit=32768) ──")
     for stage, split_vals in token_data_np.items():
         label = stage.replace("\n", " ")
         print(f"  {label}: " + ", ".join(

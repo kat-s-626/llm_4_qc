@@ -3,7 +3,7 @@
   - Circuit depth
   - Number of gates
 
-for four models across two evaluation sets (non-parameterized / parameterized).
+for four models across two evaluation sets (non-parameterised / parameterised).
 Produces a single figure with 2 rows × 3 columns (2 sets × 3 dimensions).
 
 Usage
@@ -193,7 +193,7 @@ def plot_barchart(
 ) -> None:
     # rows = metric dimension, cols = set, rightmost col = legend
     dimensions  = ["qubits", "depth", "gates"]
-    col_labels  = ["Non-parameterized Set", "Parameterized Set"]
+    col_labels  = ["Non-parameterised Set", "Parameterised Set"]
     col_data    = [non_param_data,         param_data]
 
     fig = plt.figure(figsize=(13, 13))
@@ -241,13 +241,13 @@ def parse_args() -> argparse.Namespace:
         "--non-param-paths", nargs=4, type=Path,
         default=DEFAULT_NON_PARAM_PATHS,
         metavar=("QWEN", "GPTOSS", "SFT", "SFT_GRPO"),
-        help="Four summary .txt paths for the non-parameterized set (Qwen3-8B, GPT-OSS, SFT, SFT+GRPO).",
+        help="Four summary .txt paths for the non-parameterised set (Qwen3-8B, GPT-OSS, SFT, SFT+GRPO).",
     )
     parser.add_argument(
         "--param-paths", nargs=4, type=Path,
         default=DEFAULT_PARAM_PATHS,
         metavar=("QWEN", "GPTOSS", "SFT", "SFT_GRPO"),
-        help="Four summary .txt paths for the parameterized set.",
+        help="Four summary .txt paths for the parameterised set.",
     )
     parser.add_argument(
         "--model-labels", nargs=4, type=str,

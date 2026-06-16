@@ -1,4 +1,4 @@
-"""Plot step-wise fidelity for two sets (non-parametric and parametric) side by
+"""Plot step-wise fidelity for two sets (non-parameterised and parameterised) side by
 side in a single figure with a shared legend placed to the right of the panels.
 
 Usage
@@ -31,8 +31,8 @@ apply_plot_style()
 DRAW_ORDER = ("1_qubits", "2_qubits", "3_qubits", "4_qubits", "5_qubits", "overall")
 
 PANEL_TITLES = {
-    "non_param": "Non-Parametric Set",
-    "param": "Parametric Set",
+    "non_param": "Non-Parameterised Set",
+    "param": "Parameterised Set",
 }
 
 
@@ -140,12 +140,12 @@ def plot_combined(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Plot non-parametric and parametric step-wise fidelity side by side."
+        description="Plot non-parameterised and parameterised step-wise fidelity side by side."
     )
     parser.add_argument("--non-param-csv", type=Path, required=True,
-                        help="Parsed step-wise fidelity CSV for the non-parametric (Grover) set.")
+                        help="Parsed step-wise fidelity CSV for the non-parameterised (Grover) set.")
     parser.add_argument("--param-csv", type=Path, required=True,
-                        help="Parsed step-wise fidelity CSV for the parametric (random) set.")
+                        help="Parsed step-wise fidelity CSV for the parameterised (random) set.")
     parser.add_argument("--output-dir", type=Path, default=Path(FIG_DIR),
                         help="Directory for saved plot.")
     parser.add_argument("--output-file", type=str,
