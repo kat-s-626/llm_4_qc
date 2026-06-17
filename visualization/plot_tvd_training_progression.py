@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from config.paths import FIG_DIR
-from visualization.constants import apply_plot_style, PLOT_COLORS
+from visualization.constants import STEPWISE_PLOT_CONFIG, apply_plot_style, PLOT_COLORS
 
 apply_plot_style()
 
@@ -275,15 +275,24 @@ def plot_line_chart(
                 title="Parameterised Set",    show_ylabel=False)
 
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(
+    # fig.legend(
+    #     handles, labels,
+    #     loc="center left",
+    #     bbox_to_anchor=(1.0, 0.5),
+    #     fontsize=11,
+    #     framealpha=0.9,
+    #     title_fontsize=11,
+    #     borderpad=1.0,
+    #     labelspacing=0.8,
+    # )
+
+    ax_left, _ = axes
+
+    ax_left.legend(
         handles, labels,
-        loc="center left",
-        bbox_to_anchor=(1.0, 0.5),
-        fontsize=11,
-        framealpha=0.9,
-        title_fontsize=11,
-        borderpad=1.0,
-        labelspacing=0.8,
+        loc="upper left",
+        fontsize=STEPWISE_PLOT_CONFIG["legend_fontsize"],
+        framealpha=STEPWISE_PLOT_CONFIG["legend_framealpha"],
     )
 
     fig.tight_layout()
@@ -411,15 +420,22 @@ def plot_token_limit_chart(
 
     # Shared legend to the right, outside both panels
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(
+    # fig.legend(
+    #     handles, labels,
+    #     loc="center left",
+    #     bbox_to_anchor=(0.755, 0.5),
+    #     fontsize=11,
+    #     framealpha=0.9,
+    #     title_fontsize=11,
+    #     borderpad=1.0,
+    #     labelspacing=0.8,
+    # )
+    ax_left, _ = axes
+    ax_left.legend(
         handles, labels,
-        loc="center left",
-        bbox_to_anchor=(0.755, 0.5),
-        fontsize=11,
-        framealpha=0.9,
-        title_fontsize=11,
-        borderpad=1.0,
-        labelspacing=0.8,
+        loc="upper left",
+        fontsize=STEPWISE_PLOT_CONFIG["legend_fontsize"],
+        framealpha=STEPWISE_PLOT_CONFIG["legend_framealpha"],
     )
 
     fig.subplots_adjust(left=0.08, right=0.74, top=0.90, bottom=0.08, wspace=0.28)

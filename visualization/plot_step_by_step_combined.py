@@ -122,14 +122,22 @@ def plot_combined(
         if label not in seen:
             seen[label] = handle
 
-    fig.legend(
+    # fig.legend(
+    #     list(seen.values()),
+    #     list(seen.keys()),
+    #     loc="center left",
+    #     bbox_to_anchor=(1.01, 0.5),
+    #     fontsize=STEPWISE_PLOT_CONFIG["legend_fontsize"],
+    #     framealpha=STEPWISE_PLOT_CONFIG["legend_framealpha"],
+    #     borderaxespad=0,
+    # )
+
+    ax_left.legend(
         list(seen.values()),
         list(seen.keys()),
-        loc="center left",
-        bbox_to_anchor=(1.01, 0.5),
+        loc="lower left",
         fontsize=STEPWISE_PLOT_CONFIG["legend_fontsize"],
         framealpha=STEPWISE_PLOT_CONFIG["legend_framealpha"],
-        borderaxespad=0,
     )
 
     plt.tight_layout()

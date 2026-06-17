@@ -198,8 +198,7 @@ def plot_barchart(
 
     fig = plt.figure(figsize=(13, 13))
     gs = fig.add_gridspec(
-        3, 3,
-        width_ratios=[1, 1, 0.18],
+        3, 2,
         hspace=0.48,
         wspace=0.32,
     )
@@ -212,19 +211,16 @@ def plot_barchart(
                 ax.set_title(clabel, fontsize=11, pad=18)
             _plot_group(ax, dim, cdata, model_labels, "")
 
-    # Shared legend in the right-hand panel spanning all rows
-    legend_ax = fig.add_subplot(gs[:, 2])
-    legend_ax.set_axis_off()
+    # Legend inside the top-left plot
     handles, labels = axes[0][0].get_legend_handles_labels()
-    legend_ax.legend(
+    axes[0][0].legend(
         handles,
         labels,
-        loc="center",
+        loc="upper left",
         fontsize=10,
         framealpha=0.9,
-        title_fontsize=10,
-        borderpad=1.0,
-        labelspacing=0.8,
+        borderpad=0.8,
+        labelspacing=0.6,
     )
 
     fig.savefig(save_path, dpi=300, bbox_inches="tight")
