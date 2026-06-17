@@ -46,7 +46,7 @@ def filter_circuit_by_gates(num_tokens_threshold: int, csv_paths: list[str], jso
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Filter non-parameterized set by token threshold and circuit quality.')
+    parser = argparse.ArgumentParser(description='Filter non-parameterised set by token threshold and circuit quality.')
     parser.add_argument(
         '--num-tokens-threshold',
         type=int,

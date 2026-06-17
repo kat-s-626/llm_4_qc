@@ -2,9 +2,9 @@ import json
 import math
 from qiskit import QuantumCircuit, qasm3
 from qiskit.quantum_info import Statevector
-from dataset_generator.src.parameterized_set import (
+from dataset_generator.src.parameterised_set import (
     generate_random_circuit,
-    generate_parameterized_set,
+    generate_parameterised_set,
     _select_gate,
     _get_measurement_probabilities,
     _get_circuit_hash,
@@ -39,7 +39,7 @@ class TestSelectGate:
         assert all(g in [0, 1, 2] for g in results)
         assert {0, 1, 2}.issubset(set(results))
 
-class TestGenerateParametricSetCircuit:
+class TestGenerateParameterisedSetCircuit:
     """Test the main circuit generation function."""
 
     def test_circuit_creation(self):
@@ -132,11 +132,11 @@ class TestGenerateParametricSetCircuit:
                 assert qubits[0] != qubits[1]  # Control and target should differ
 
 
-class TestParametricSetConfiguration:
+class TestParameterisedSetConfiguration:
     """Test the configuration constants."""
 
     def test_gate_set_contents(self):
-        """Gate set should contain valid gate names used by parameterized_set."""
+        """Gate set should contain valid gate names used by parameterised_set."""
         valid_gate_names = {
             "h", "x", "z", "rx", "ry", "rz", "cx", "cz", "mcx", "mcmt"
         }
@@ -203,11 +203,11 @@ class TestOutputFormat:
             assert 'num_controls' in gate_info
             assert 'num_targets' in gate_info
 
-    def test_generate_parameterized_set_jsonl_output(self, tmp_path):
-        """generate_parameterized_set should write valid JSONL records with required fields."""
-        output_path = tmp_path / "parameterized_set.jsonl"
+    def test_generate_parameterised_set_jsonl_output(self, tmp_path):
+        """generate_parameterised_set should write valid JSONL records with required fields."""
+        output_path = tmp_path / "parameterised_set.jsonl"
 
-        generate_parameterized_set(
+        generate_parameterised_set(
             num_circuits=3,
             min_num_qubits=2,
             max_num_qubits=3,

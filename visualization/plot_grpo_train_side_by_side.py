@@ -168,8 +168,8 @@ def parse_args() -> argparse.Namespace:
 		default=default_parsed_logs / "randomset_sftgrpo_05" / "grpo_metrics_aggregated.csv",
 		help="CSV for right plot column (default: randomset_sftgrpo_05).",
 	)
-	parser.add_argument("--left-label", type=str, default="Non-Parameterized Set", help="Legend/title label for left column.")
-	parser.add_argument("--right-label", type=str, default="Parameterized Set", help="Legend/title label for right column.")
+	parser.add_argument("--left-label", type=str, default="Non-Parameterised Set", help="Legend/title label for left column.")
+	parser.add_argument("--right-label", type=str, default="Parameterised Set", help="Legend/title label for right column.")
 	parser.add_argument(
 		"--max-step",
 		type=int,
@@ -185,7 +185,7 @@ def parse_args() -> argparse.Namespace:
 	parser.add_argument(
 		"--plot-file",
 		type=str,
-		default="grpo_side_by_side_non_parameterized_vs_parameterized.png",
+		default="grpo_side_by_side_non_parameterised_vs_parameterised.png",
 		help="Filename for side-by-side comparison figure.",
 	)
 	return parser.parse_args()

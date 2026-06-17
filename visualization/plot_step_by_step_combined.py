@@ -5,7 +5,7 @@ Usage
 -----
 python -m visualization.plot_step_by_step_combined \
     --non-param-csv  /path/to/non_parametric_stepwise.csv \
-    --param-csv      /path/to/parametric_stepwise.csv \
+    --param-csv      /path/to/parameterised_stepwise.csv \
     [--output-dir    visualization/figures] \
     [--output-file   combined_stepwise_fidelity.png]
 """
