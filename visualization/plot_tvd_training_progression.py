@@ -9,13 +9,13 @@ import matplotlib.ticker as ticker
 import numpy as np
 import pandas as pd
 
-from config.paths import FIG_DIR
+from config.paths import FIG_DIR, EVAL_RESULTS_DIR
 from visualization.constants import STEPWISE_PLOT_CONFIG, apply_plot_style, PLOT_COLORS
 
 apply_plot_style()
 
 # ── data paths ────────────────────────────────────────────────────────────────
-_BASE = Path("/scratch3/ip004/data/results/eval")
+_BASE = Path(EVAL_RESULTS_DIR) / "eval"
 
 # Non-parameterised (Grover) set
 _NON_PARAM_DIRS = {

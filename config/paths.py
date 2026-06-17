@@ -5,6 +5,11 @@ from pathlib import Path
 HOME = os.environ.get("HOME")
 PROJECT_DIR = os.path.join(HOME, "llm_4_qc")
 
+# Repo-relative default so it works regardless of clone location.
+# Override with the EVAL_RESULTS_DIR env var when running on a remote cluster.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+EVAL_RESULTS_DIR = os.environ.get("EVAL_RESULTS_DIR", str(_REPO_ROOT / "data" / "results"))
+
 DATA_DIR = os.path.join(PROJECT_DIR, "data")
 MODELS_DIR = os.path.join(PROJECT_DIR, "models")
 QWEN_8B_DIR = os.path.join(MODELS_DIR, "Qwen/Qwen3-8B")

@@ -21,6 +21,7 @@ Paths are ordered: Qwen3-8B, GPT-OSS, SFT, SFT+GRPO.
 from __future__ import annotations
 
 import argparse
+import math
 import re
 from pathlib import Path
 from typing import Any
@@ -29,13 +30,13 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
-from config.paths import FIG_DIR
-from visualization.constants import apply_plot_style, PLOT_COLORS
+from config.paths import FIG_DIR, EVAL_RESULTS_DIR
+from visualization.constants import apply_plot_style, PLOT_COLORS, STEPWISE_PLOT_CONFIG
 
 apply_plot_style()
 
 # ── defaults ──────────────────────────────────────────────────────────────────
-_BASE = Path("/scratch3/ip004/data/results/eval")
+_BASE = Path(EVAL_RESULTS_DIR) / "eval"
 
 DEFAULT_NON_PARAM_PATHS = [
     _BASE / "grover_sets/baseline/baseline_qwen3_8b/test_1_summary.txt",
@@ -138,6 +139,7 @@ def _plot_group(
     all_model_data: list[dict[str, Any]],
     model_labels: list[str],
     set_title: str,
+    y_max: float = 1.0,
 ) -> None:
     """Draw a single grouped bar chart on *ax*."""
     # Collect ordered x-axis categories from the first non-empty model
@@ -179,9 +181,10 @@ def _plot_group(
     ax.set_ylabel("Average TVD", fontsize=10)
     ax.set_xticks(x)
     ax.set_xticklabels(pretty, fontsize=9)
-    ax.set_ylim(0, 1.0)
-    ax.yaxis.set_major_locator(ticker.MultipleLocator(0.2))
-    ax.yaxis.set_minor_locator(ticker.MultipleLocator(0.1))
+    ax.set_ylim(0, y_max)
+    tick = 0.1 if y_max <= 0.5 else 0.2
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(tick))
+    ax.yaxis.set_minor_locator(ticker.MultipleLocator(tick / 2))
     ax.grid(True, axis="y", which="major", linestyle="-", alpha=0.15)
 
 
@@ -196,10 +199,19 @@ def plot_barchart(
     col_labels  = ["Non-parameterised Set", "Parameterised Set"]
     col_data    = [non_param_data,         param_data]
 
+    all_vals = [
+        g["fidelity"]
+        for dataset in [*non_param_data, *param_data]
+        for dim in dataset.values()
+        for g in dim.values()
+    ]
+    raw_max = max(all_vals) if all_vals else 1.0
+    y_max = math.ceil(raw_max * 1.1 * 10) / 10
+
     fig = plt.figure(figsize=(13, 13))
     gs = fig.add_gridspec(
         3, 2,
-        hspace=0.48,
+        hspace=0.35,
         wspace=0.32,
     )
     axes = [[fig.add_subplot(gs[r, c]) for c in range(2)] for r in range(3)]
@@ -209,7 +221,7 @@ def plot_barchart(
             ax = axes[row_idx][col_idx]
             if row_idx == 0:
                 ax.set_title(clabel, fontsize=11, pad=18)
-            _plot_group(ax, dim, cdata, model_labels, "")
+            _plot_group(ax, dim, cdata, model_labels, "", y_max=y_max)
 
     # Legend inside the top-left plot
     handles, labels = axes[0][0].get_legend_handles_labels()
@@ -217,8 +229,8 @@ def plot_barchart(
         handles,
         labels,
         loc="upper left",
-        fontsize=10,
-        framealpha=0.9,
+        fontsize=STEPWISE_PLOT_CONFIG["legend_fontsize"],
+        framealpha=STEPWISE_PLOT_CONFIG["legend_framealpha"],
         borderpad=0.8,
         labelspacing=0.6,
     )

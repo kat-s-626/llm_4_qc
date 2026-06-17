@@ -25,11 +25,26 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-GROVER_SFT_DIR="${GROVER_SFT_DIR:-/scratch3/ip004/data/results/eval/grover_sets/sft}"
-RANDOM_SFT_DIR="${RANDOM_SFT_DIR:-/scratch3/ip004/data/results/eval/random_sets/sft}"
+# shellcheck source=scripts/constants.sh
+source scripts/constants.sh
+
+# Re-anchor results_dir to the actual repo location (constants.sh assumes $HOME/llm_4_qc).
+results_dir="$REPO_ROOT/data/results"
+
+GROVER_SFT_DIR="${GROVER_SFT_DIR:-$results_dir/eval/grover_sets/sft}"
+RANDOM_SFT_DIR="${RANDOM_SFT_DIR:-$results_dir/eval/random_sets/sft}"
 FIG_DIR="${FIG_DIR:-visualization/figures}"
 
-PYTHON="$(source venv/bin/activate 2>/dev/null; which python)"
+# Prefer a venv found relative to the repo root (handles local checkouts where
+# project_root in constants.sh may not match the actual clone location).
+if [ -f "$REPO_ROOT/.venv/bin/activate" ]; then
+    source "$REPO_ROOT/.venv/bin/activate"
+elif [ -f "$REPO_ROOT/venv/bin/activate" ]; then
+    source "$REPO_ROOT/venv/bin/activate"
+else
+    source "$venv"
+fi
+PYTHON="$(which python)"
 
 # Single shared tmpdir – cleaned up on exit so all three steps can share CSVs.
 TMPDIR_WORK="$(mktemp -d)"
